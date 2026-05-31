@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Role } from '@/types/membership';
+import type { Role } from '@/features/members/types';
 
 interface MemberRoleSelectProps {
   currentRole: Role;
@@ -41,7 +41,7 @@ export function MemberRoleSelect({
       <SelectTrigger
         size="sm"
         aria-label="Cambiar rol del miembro"
-        className="min-w-[120px]"
+        className="min-w-[130px] border-border bg-background transition-colors hover:border-brand-emerald/40 focus-visible:ring-brand-emerald/30"
       >
         <SelectValue />
       </SelectTrigger>

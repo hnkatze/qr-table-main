@@ -19,19 +19,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { RoleBadge } from '@/components/users/role-badge';
-import type { Role } from '@/types/membership';
-import type { User } from '@/types/user';
+import { RoleBadge } from '@/features/members/components/role-badge';
+import type { MemberRow, Role } from '@/features/members/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface MemberRow {
-  membershipId: string;
-  userId: string;
-  role: Role;
-  createdAt: number;
-  user: User;
-}
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface MembersTableProps {
   members: MemberRow[];
@@ -62,6 +53,74 @@ function formatJoinDate(timestamp: number): string {
   });
 }
 
+/**
+ * Returns avatar fallback color classes based on the first letter of the name/email.
+ * Two categories — keeps things simple and token-based.
+ */
+function getAvatarAccent(name: string): string {
+  const code = name.charCodeAt(0) % 4;
+  const map: Record<number, string> = {
+    0: 'bg-brand-emerald/15 text-brand-emerald',
+    1: 'bg-brand-sky/15 text-brand-sky',
+    2: 'bg-brand-violet/15 text-brand-violet',
+    3: 'bg-brand-amber/15 text-brand-amber',
+  };
+  return map[code] ?? 'bg-muted text-muted-foreground';
+}
+
+// ─── Actions dropdown ─────────────────────────────────────────────────────────
+
+interface ActionsMenuProps {
+  membershipId: string;
+  displayName: string;
+  role: Role;
+  onChangeRole: (membershipId: string, newRole: Role) => void;
+  onRemoveMember: (membershipId: string) => void;
+}
+
+function ActionsMenu({
+  membershipId,
+  displayName,
+  role,
+  onChangeRole,
+  onRemoveMember,
+}: ActionsMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Acciones para ${displayName}`}
+          />
+        }
+      >
+        <MoreHorizontalIcon aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() =>
+            onChangeRole(membershipId, role === 'owner' ? 'staff' : 'owner')
+          }
+        >
+          <ShieldIcon aria-hidden="true" />
+          Cambiar a {role === 'owner' ? 'Personal' : 'Propietario'}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => onRemoveMember(membershipId)}
+        >
+          <UserMinusIcon aria-hidden="true" />
+          Quitar del restaurante
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // ─── Mobile card (small screens) ─────────────────────────────────────────────
 
 interface MemberCardProps {
@@ -81,27 +140,30 @@ function MemberCard({
 }: MemberCardProps) {
   const { user, role, createdAt, membershipId } = member;
   const initials = getInitials(user.displayName, user.email);
+  const avatarAccent = getAvatarAccent(user.displayName ?? user.email);
 
   return (
     <div
-      className="flex items-start gap-3 rounded-lg border border-border bg-card p-4"
+      className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-shadow duration-200 hover:shadow-sm"
       role="listitem"
     >
+      {/* Avatar */}
       <Avatar size="default">
         {user.photoUrl && (
           <AvatarImage src={user.photoUrl} alt={user.displayName ?? user.email} />
         )}
-        <AvatarFallback>{initials}</AvatarFallback>
+        <AvatarFallback className={avatarAccent}>{initials}</AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">
+        {/* Top: name + actions */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
               {user.displayName ?? user.email}
               {isCurrentUser && (
-                <span className="ml-1.5 text-xs text-muted-foreground font-normal">
-                  (vos)
+                <span className="ml-1.5 rounded-full bg-brand-emerald/10 px-1.5 py-px text-xs font-medium text-brand-emerald leading-none">
+                  vos
                 </span>
               )}
             </p>
@@ -109,44 +171,17 @@ function MemberCard({
           </div>
 
           {isOwner && !isCurrentUser && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Acciones para ${user.displayName ?? user.email}`}
-                  />
-                }
-              >
-                <MoreHorizontalIcon aria-hidden="true" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() =>
-                    onChangeRole(
-                      membershipId,
-                      role === 'owner' ? 'staff' : 'owner'
-                    )
-                  }
-                >
-                  <ShieldIcon aria-hidden="true" />
-                  Cambiar a {role === 'owner' ? 'Personal' : 'Propietario'}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => onRemoveMember(membershipId)}
-                >
-                  <UserMinusIcon aria-hidden="true" />
-                  Quitar del restaurante
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ActionsMenu
+              membershipId={membershipId}
+              displayName={user.displayName ?? user.email}
+              role={role}
+              onChangeRole={onChangeRole}
+              onRemoveMember={onRemoveMember}
+            />
           )}
         </div>
 
+        {/* Bottom: role badge + join date */}
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           <RoleBadge role={role} />
           <span className="text-xs text-muted-foreground">
@@ -188,7 +223,7 @@ export function MembersTable({
     <>
       {/* Mobile: card list */}
       <div
-        className="md:hidden space-y-3"
+        className="md:hidden space-y-2 p-4"
         role="list"
         aria-label="Miembros del restaurante"
       >
@@ -208,12 +243,12 @@ export function MembersTable({
       <div className="hidden md:block">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead scope="col">Miembro</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead scope="col" className="pl-5">Miembro</TableHead>
               <TableHead scope="col">Rol</TableHead>
               <TableHead scope="col">Se unió</TableHead>
               {isOwner && (
-                <TableHead scope="col" className="w-12 text-right">
+                <TableHead scope="col" className="w-12 pr-4 text-right">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               )}
@@ -224,11 +259,15 @@ export function MembersTable({
               const { user, role, createdAt, membershipId } = member;
               const isCurrentUser = member.userId === currentUserId;
               const initials = getInitials(user.displayName, user.email);
+              const avatarAccent = getAvatarAccent(user.displayName ?? user.email);
 
               return (
-                <TableRow key={membershipId}>
+                <TableRow
+                  key={membershipId}
+                  className="group/row transition-colors hover:bg-muted/40"
+                >
                   {/* Member identity */}
-                  <TableCell>
+                  <TableCell className="pl-5">
                     <div className="flex items-center gap-3">
                       <Avatar size="default">
                         {user.photoUrl && (
@@ -237,14 +276,19 @@ export function MembersTable({
                             alt={user.displayName ?? user.email}
                           />
                         )}
-                        <AvatarFallback>{initials}</AvatarFallback>
+                        <AvatarFallback className={avatarAccent}>
+                          {initials}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
                           {user.displayName ?? user.email}
                           {isCurrentUser && (
-                            <span className="ml-1.5 text-xs text-muted-foreground font-normal">
-                              (vos)
+                            <span
+                              className="rounded-full bg-brand-emerald/10 px-1.5 py-px text-xs font-medium text-brand-emerald leading-none"
+                              aria-label="Este sos vos"
+                            >
+                              vos
                             </span>
                           )}
                         </p>
@@ -267,44 +311,15 @@ export function MembersTable({
 
                   {/* Actions — owner only, hidden for self */}
                   {isOwner && (
-                    <TableCell className="text-right">
+                    <TableCell className="pr-4 text-right">
                       {!isCurrentUser && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`Acciones para ${user.displayName ?? user.email}`}
-                              />
-                            }
-                          >
-                            <MoreHorizontalIcon aria-hidden="true" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() =>
-                                onChangeRole(
-                                  membershipId,
-                                  role === 'owner' ? 'staff' : 'owner'
-                                )
-                              }
-                            >
-                              <ShieldIcon aria-hidden="true" />
-                              Cambiar a{' '}
-                              {role === 'owner' ? 'Personal' : 'Propietario'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => onRemoveMember(membershipId)}
-                            >
-                              <UserMinusIcon aria-hidden="true" />
-                              Quitar del restaurante
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <ActionsMenu
+                          membershipId={membershipId}
+                          displayName={user.displayName ?? user.email}
+                          role={role}
+                          onChangeRole={onChangeRole}
+                          onRemoveMember={onRemoveMember}
+                        />
                       )}
                     </TableCell>
                   )}

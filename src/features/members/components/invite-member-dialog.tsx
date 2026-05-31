@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UserPlusIcon } from 'lucide-react';
+import { UserPlusIcon, CheckCircleIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Role } from '@/types/membership';
+import type { Role } from '@/features/members/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,9 +91,9 @@ export function InviteMemberDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button className="gap-2">
+          <Button className="gap-2 bg-brand-emerald text-white hover:bg-brand-emerald/90 focus-visible:ring-brand-emerald/40">
             <UserPlusIcon aria-hidden="true" />
-            Invitar miembro
+            Invitá un miembro
           </Button>
         }
       />
@@ -102,15 +102,17 @@ export function InviteMemberDialog({
         <DialogHeader>
           <DialogTitle>Invitar miembro</DialogTitle>
           <DialogDescription>
-            El usuario tendrá acceso al panel de {restaurantName} con el rol
-            que seleccionés.
+            El usuario tendrá acceso al panel de{' '}
+            <strong className="text-foreground">{restaurantName}</strong> con el
+            rol que seleccionés.
           </DialogDescription>
         </DialogHeader>
 
         {submitState.status === 'success' && (
-          <Alert>
-            <AlertTitle>Invitación enviada</AlertTitle>
-            <AlertDescription>
+          <Alert className="border-brand-emerald/30 bg-brand-emerald/10">
+            <CheckCircleIcon className="size-4 text-brand-emerald" aria-hidden="true" />
+            <AlertTitle className="text-brand-emerald">Invitación enviada</AlertTitle>
+            <AlertDescription className="text-brand-emerald/80">
               Se invitó a <strong>{submitState.email}</strong> correctamente.
             </AlertDescription>
           </Alert>
@@ -180,6 +182,7 @@ export function InviteMemberDialog({
               type="submit"
               form="invite-member-form"
               disabled={isSubmitting || email.trim().length === 0}
+              className="bg-brand-emerald text-white hover:bg-brand-emerald/90 focus-visible:ring-brand-emerald/40 disabled:bg-brand-emerald/50"
             >
               {isSubmitting ? 'Invitando…' : 'Invitar'}
             </Button>
