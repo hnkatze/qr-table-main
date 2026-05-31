@@ -54,11 +54,17 @@ export function Topbar() {
           <Menu className="h-5 w-5" aria-hidden="true" />
         </SheetTrigger>
 
-        <SheetContent side="left" className="w-72 p-0">
-          <SheetHeader className="border-b border-border px-4 py-3.5">
-            <SheetTitle className="flex items-baseline gap-1.5">
+        <SheetContent
+          side="left"
+          className="sidebar-surface w-72 p-0 border-sidebar-border text-sidebar-foreground"
+        >
+          <SheetHeader className="border-b border-sidebar-border px-4 py-3.5">
+            <SheetTitle className="flex items-center gap-2 text-sidebar-foreground">
+              <span className="sidebar-brand-dot" aria-hidden="true" />
               <span>Mesa</span>
-              <span className="text-xs font-normal text-muted-foreground">Admin</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-sidebar-primary/90">
+                Admin
+              </span>
             </SheetTitle>
           </SheetHeader>
 
@@ -66,7 +72,7 @@ export function Topbar() {
             <SidebarNavList onNavigate={() => setMobileOpen(false)} />
           </div>
 
-          <div className="mt-auto px-4 py-4 border-t border-border">
+          <div className="mt-auto px-4 py-4 border-t border-sidebar-border">
             <RestaurantSwitcher />
           </div>
         </SheetContent>

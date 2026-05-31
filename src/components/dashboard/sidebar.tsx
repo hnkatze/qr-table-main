@@ -50,10 +50,10 @@ export function SidebarNavList({ onNavigate }: NavListProps) {
                 onClick={onNavigate}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                  'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
                   isActive
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    ? 'sidebar-nav-active text-sidebar-primary-foreground'
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 )}
               >
                 <Icon
@@ -61,7 +61,7 @@ export function SidebarNavList({ onNavigate }: NavListProps) {
                     'h-4 w-4 shrink-0 transition-colors',
                     isActive
                       ? 'text-sidebar-primary-foreground'
-                      : 'text-muted-foreground group-hover:text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground'
                   )}
                   aria-hidden="true"
                 />
@@ -80,15 +80,16 @@ export function SidebarNavList({ onNavigate }: NavListProps) {
 export function Sidebar() {
   return (
     <aside
-      className="hidden lg:flex flex-col w-60 shrink-0 border-r border-sidebar-border bg-sidebar"
+      className="sidebar-surface hidden lg:flex flex-col w-60 shrink-0 border-r border-sidebar-border"
       aria-label="Panel de navegación"
     >
       {/* Logo / brand */}
-      <div className="flex h-14 items-center border-b border-sidebar-border px-4">
+      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
+        <span className="sidebar-brand-dot" aria-hidden="true" />
         <span className="text-base font-semibold tracking-tight text-sidebar-foreground">
           Mesa
         </span>
-        <span className="ml-1.5 text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-medium uppercase tracking-wider text-sidebar-primary/90">
           Admin
         </span>
       </div>
