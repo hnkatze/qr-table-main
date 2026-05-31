@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# playwright / agent debugging artifacts
+.playwright-mcp/
+*.debug.png
+
 # env files (can opt-in for committing if needed)
 .env*
 
@@ -39,3 +43,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.claude/
+claude-rules.json
+claude-rules.lock.json
+.mcp.json
+CLAUDE.md
+.codegraph/
+.agents/
+skills-lock.json
+.atl/

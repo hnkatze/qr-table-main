@@ -1,0 +1,574 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-heading: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ─── Auth page — login premium redesign ──────────────────────────────────────
+   Keyframes and component-level styles that cannot be expressed with Tailwind
+   utilities (multi-step animations, pseudo-element textures, complex stagger).
+
+   Vibrant palette (coherent with "Bento vibrante" dashboard):
+     --auth-emerald : oklch(0.696 0.17 162)   — primary brand accent
+     --auth-sky     : oklch(0.623 0.183 255)  — secondary/cool accent
+     --auth-violet  : oklch(0.606 0.196 292)  — depth/richness accent
+     --auth-amber   : oklch(0.769 0.159 82)   — warm highlight accent
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/*
+ * Named letter-spacing values used across auth components.
+ * No Tailwind scale token matches these design-specific values,
+ * so they are promoted as CSS custom properties.
+ *
+ * Vibrant accent tokens (emerald/sky/violet/amber) — coherent with bento home.
+ */
+:root {
+  --auth-tracking-brand:   0.18em;  /* Mesa wordmark */
+  --auth-tracking-eyebrow: 0.22em;  /* Section eyebrow labels */
+  --auth-tracking-meta:    0.12em;  /* Footer metadata strip */
+  --auth-grid-cell:        3rem;    /* Brand panel grid texture cell size */
+
+  /* Vibrant accent palette — same hues as bento dashboard */
+  --auth-emerald:  oklch(0.696 0.17 162);
+  --auth-sky:      oklch(0.623 0.183 255);
+  --auth-violet:   oklch(0.606 0.196 292);
+  --auth-amber:    oklch(0.769 0.159 82);
+
+  /* Glow radii for brand panel layered radials */
+  --auth-glow-size-lg: 65%;
+  --auth-glow-size-sm: 45%;
+}
+
+/* Utility classes that consume the above variables */
+.auth-tracking-brand   { letter-spacing: var(--auth-tracking-brand); }
+.auth-tracking-eyebrow { letter-spacing: var(--auth-tracking-eyebrow); }
+.auth-tracking-meta    { letter-spacing: var(--auth-tracking-meta); }
+
+/* Staggered entrance: fade + translate-y */
+@keyframes auth-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error shake */
+@keyframes auth-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-5px); }
+  40%       { transform: translateX(5px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+/* Slow ambient drift for the glow orbs in the brand panel */
+@keyframes auth-drift {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  33%       { transform: translate(4%, -3%) scale(1.04); }
+  66%       { transform: translate(-3%, 4%) scale(0.97); }
+}
+
+@layer components {
+  /* ── Brand panel — fine grid texture ──────────────────────────────────── */
+  .auth-grid-texture {
+    background-image:
+      linear-gradient(oklch(1 0 0 / 1) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 1) 1px, transparent 1px);
+    background-size: var(--auth-grid-cell) var(--auth-grid-cell);
+  }
+
+  /*
+   * ── Brand panel — deep vibrant chromatic background ──────────────────────
+   *
+   * Strategy: three layered radial gradients over a near-black oklch base.
+   *   • Emerald orb  — top-left quadrant, primary brand anchor
+   *   • Violet orb   — bottom-right, depth and richness
+   *   • Sky diffuse  — center-right, bridging cool midtone
+   *
+   * All at low opacity (0.28–0.36) so text stays WCAG AA legible over the dark
+   * base. Orbs drift slowly (auth-drift) for ambient life.
+   * The grid texture sits on top at opacity-[4%] for structure.
+   */
+  .auth-brand-bg {
+    background-color: oklch(0.1 0.01 260);   /* near-black, slight cool tint */
+  }
+
+  /* Emerald glow — top-left */
+  .auth-glow-emerald {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 65% 65% at 15% 20%,
+      oklch(0.696 0.17 162 / 0.32) 0%,
+      transparent 65%
+    );
+    animation: auth-drift 18s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  /* Violet glow — bottom-right */
+  .auth-glow-violet {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 65% 65% at 85% 80%,
+      oklch(0.606 0.196 292 / 0.30) 0%,
+      transparent 65%
+    );
+    animation: auth-drift 22s ease-in-out infinite reverse;
+    will-change: transform;
+  }
+
+  /* Sky glow — center diffuse bridge */
+  .auth-glow-sky {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 45% 45% at 55% 45%,
+      oklch(0.623 0.183 255 / 0.18) 0%,
+      transparent 60%
+    );
+    animation: auth-drift 26s ease-in-out infinite 4s;
+    will-change: transform;
+  }
+
+  /* Amber micro-highlight — bottom-left corner warmth */
+  .auth-glow-amber {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 30% 30% at 5% 90%,
+      oklch(0.769 0.159 82 / 0.16) 0%,
+      transparent 60%
+    );
+  }
+
+  /* Vignette — ensures corners stay dark for text legibility */
+  .auth-panel-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 80% 80% at 50% 50%,
+      transparent 40%,
+      oklch(0.06 0 0 / 0.55) 100%
+    );
+  }
+
+  /* ── QR motif — accent-tinted icon ───────────────────────────────────── */
+  .auth-qr-icon {
+    width: 28px;
+    height: 28px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .auth-qr-icon::before,
+  .auth-qr-icon::after {
+    content: '';
+    position: absolute;
+    display: block;
+  }
+  /* Outer ring — emerald tinted */
+  .auth-qr-icon::before {
+    inset: 0;
+    border: 2px solid oklch(0.696 0.17 162 / 0.80);
+    border-radius: 3px;
+    box-shadow: 0 0 8px oklch(0.696 0.17 162 / 0.35);
+  }
+  /* Inner dot — emerald solid */
+  .auth-qr-icon::after {
+    inset: 6px;
+    background: oklch(0.696 0.17 162 / 0.90);
+    border-radius: 1px;
+  }
+
+  /* Smaller variant for mobile header — sky tinted */
+  .auth-qr-icon-sm {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .auth-qr-icon-sm::before,
+  .auth-qr-icon-sm::after {
+    content: '';
+    position: absolute;
+    display: block;
+  }
+  .auth-qr-icon-sm::before {
+    inset: 0;
+    border: 1.5px solid oklch(0.696 0.17 162 / 0.85);
+    border-radius: 2px;
+  }
+  .auth-qr-icon-sm::after {
+    inset: 4px;
+    background: oklch(0.696 0.17 162 / 0.90);
+    border-radius: 1px;
+  }
+
+  /* ── Input — accent focus ring (emerald) ─────────────────────────────── */
+  .auth-input {
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+  .auth-input:focus-visible {
+    outline: none;
+    border-color: oklch(0.696 0.17 162 / 0.60);
+    box-shadow:
+      0 0 0 3px oklch(0.696 0.17 162 / 0.14),
+      0 1px 3px oklch(0 0 0 / 0.06);
+  }
+
+  /* ── Submit button — emerald→sky gradient, premium lift ─────────────── */
+  /*
+   * Overrides the shadcn default button background.
+   * Gradient: emerald (left) → sky (right).
+   * On hover: slight brightness lift + shadow glow.
+   * WCAG contrast: white text on emerald-500 = 4.6:1 ✓
+   */
+  .auth-submit-btn {
+    background: linear-gradient(
+      135deg,
+      oklch(0.696 0.17 162) 0%,
+      oklch(0.623 0.183 255) 100%
+    );
+    border: none;
+    color: oklch(1 0 0);
+    transition:
+      filter 150ms ease,
+      transform 120ms ease,
+      box-shadow 150ms ease;
+  }
+  .auth-submit-btn:not(:disabled):hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow:
+      0 4px 16px oklch(0.696 0.17 162 / 0.35),
+      0 8px 32px oklch(0.623 0.183 255 / 0.20);
+  }
+  .auth-submit-btn:not(:disabled):active {
+    filter: brightness(0.97);
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  .auth-submit-btn:disabled {
+    background: linear-gradient(
+      135deg,
+      oklch(0.696 0.17 162 / 0.55) 0%,
+      oklch(0.623 0.183 255 / 0.55) 100%
+    );
+  }
+  /* Dark mode: keep same gradient — it reads well on dark backgrounds */
+  .dark .auth-submit-btn {
+    box-shadow: none;
+  }
+  .dark .auth-submit-btn:not(:disabled):hover {
+    box-shadow:
+      0 4px 20px oklch(0.696 0.17 162 / 0.40),
+      0 8px 36px oklch(0.623 0.183 255 / 0.25);
+  }
+
+  /* ── Form panel card — multi-layer shadow ─────────────────────────────── */
+  /*
+   * Padding scales with viewport:
+   *   base/sm : 2rem   (32px) — comfortable on phones
+   *   md+     : 2.5rem (40px) — generous on tablet+
+   *   lg+     : 3rem   (48px) — premium on desktop split-screen
+   */
+  .auth-form-panel {
+    box-shadow:
+      0 1px 2px oklch(0 0 0 / 0.04),
+      0 4px 12px oklch(0 0 0 / 0.06),
+      0 12px 40px oklch(0 0 0 / 0.08);
+    border-radius: var(--radius-xl);
+    background: var(--background);
+    padding: 2rem;
+  }
+  @media (min-width: 768px) {
+    .auth-form-panel {
+      padding: 2.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .auth-form-panel {
+      padding: 3rem;
+    }
+  }
+  /* In dark mode keep card subtly lifted with emerald tint on border */
+  .dark .auth-form-panel {
+    box-shadow:
+      0 1px 2px oklch(0 0 0 / 0.25),
+      0 4px 12px oklch(0 0 0 / 0.35),
+      0 16px 48px oklch(0 0 0 / 0.4);
+    background: var(--card);
+    border: 1px solid oklch(0.696 0.17 162 / 0.12);
+  }
+
+  /* ── Accent dot — small emerald bullet in form header wordmark ───────── */
+  .auth-accent-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      135deg,
+      oklch(0.696 0.17 162) 0%,
+      oklch(0.623 0.183 255) 100%
+    );
+    box-shadow: 0 0 6px oklch(0.696 0.17 162 / 0.50);
+    flex-shrink: 0;
+  }
+
+  /* ── Mobile header gradient ──────────────────────────────────────────── */
+  /*
+   * Compact version of the brand panel gradient treatment.
+   * Same emerald/violet base, lower height.
+   */
+  .auth-mobile-header {
+    background: linear-gradient(
+      135deg,
+      oklch(0.1 0.01 260) 0%,
+      oklch(0.12 0.03 290) 40%,
+      oklch(0.08 0.02 250) 100%
+    );
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-mobile-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 150% at 10% 50%, oklch(0.696 0.17 162 / 0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 120% at 90% 50%, oklch(0.606 0.196 292 / 0.20) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── Brand panel — eyebrow accent line ───────────────────────────────── */
+  /*
+   * A 2px gradient line above the eyebrow label — adds color anchor
+   * without overwhelming the text block.
+   */
+  .auth-eyebrow-line {
+    display: block;
+    height: 2px;
+    width: 2rem;
+    border-radius: 9999px;
+    background: linear-gradient(
+      90deg,
+      oklch(0.696 0.17 162) 0%,
+      oklch(0.623 0.183 255) 100%
+    );
+    margin-bottom: 1rem;
+  }
+
+  /* ── Staggered entrance animations ───────────────────────────────────── */
+  .auth-animate-1,
+  .auth-animate-2,
+  .auth-animate-3,
+  .auth-animate-4,
+  .auth-animate-5 {
+    animation: auth-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .auth-animate-1 { animation-delay: 0ms; }
+  .auth-animate-2 { animation-delay: 60ms; }
+  .auth-animate-3 { animation-delay: 110ms; }
+  .auth-animate-4 { animation-delay: 155ms; }
+  .auth-animate-5 { animation-delay: 195ms; }
+
+  /* Error alert entrance + shake */
+  .auth-animate-error {
+    animation:
+      auth-fade-up 0.25s cubic-bezier(0.22, 1, 0.36, 1) both,
+      auth-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) 0.1s both;
+  }
+
+  /* ── Reduced motion: strip all transforms and animations ─────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .auth-animate-1,
+    .auth-animate-2,
+    .auth-animate-3,
+    .auth-animate-4,
+    .auth-animate-5,
+    .auth-animate-error {
+      animation: none;
+    }
+    .auth-glow-emerald,
+    .auth-glow-violet,
+    .auth-glow-sky {
+      animation: none;
+    }
+    .auth-submit-btn:not(:disabled):hover {
+      transform: none;
+      box-shadow: none;
+      filter: brightness(1.08);
+    }
+  }
+}
+
+/* ─── Bento dashboard — entrance animations & polish ─────────────────────────
+   Keyframes only — layout, colour, and spacing are handled by Tailwind utilities
+   in the component files. Only complex multi-step animations live here.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@keyframes bento-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@layer components {
+  /* ── Bento card entrance ───────────────────────────────────────────────── */
+  .bento-reveal {
+    animation: bento-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Stagger delays — applied per tile via delayClass prop */
+  .bento-delay-1 { animation-delay: 0ms; }
+  .bento-delay-2 { animation-delay: 55ms; }
+  .bento-delay-3 { animation-delay: 110ms; }
+  .bento-delay-4 { animation-delay: 165ms; }
+  .bento-delay-5 { animation-delay: 210ms; }
+  .bento-delay-6 { animation-delay: 255ms; }
+
+  /* ── Reduced motion: disable entrance animations ──────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .bento-reveal {
+      animation: none;
+    }
+  }
+}
