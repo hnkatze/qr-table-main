@@ -14,15 +14,27 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { CreateTableState } from '@/features/tables/types';
+import { NO_ZONE_VALUE, NO_ZONE_LABEL } from '@/features/tables/constants';
+import type { CreateTableState, ZoneOption } from '@/features/tables/types';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface AddTableDialogProps {
   /** Numbers already in use — prevents duplicates client-side. */
   existingNumbers: number[];
-  onCreateTable: (tableNumber: number) => Promise<void>;
+  /** Existing zones for the assignment <Select>. */
+  zones: ZoneOption[];
+  /** Suggested next number (max existing + 1, defaults to 1). */
+  suggestedNumber: number;
+  onCreateTable: (tableNumber: number, zoneId?: string) => Promise<void>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -34,13 +46,21 @@ interface AddTableDialogProps {
  *   - Is a positive integer
  *   - Is not already in use
  *
- * On success shows inline feedback and auto-closes after 1.5 s.
- * TODO: wire Firestore table create — the onCreateTable callback already
- *   calls the service; Firestore will land inside the service only.
+ * Also lets the owner assign the new table to a zone (or leave it under
+ * "Sin zona"). On success shows inline feedback and auto-closes after 1.5 s.
+ *
+ * TODO: wire Firestore table create — onCreateTable already calls the service;
+ *   Firestore will land inside the service only.
  */
-export function AddTableDialog({ existingNumbers, onCreateTable }: AddTableDialogProps) {
+export function AddTableDialog({
+  existingNumbers,
+  zones,
+  suggestedNumber,
+  onCreateTable,
+}: AddTableDialogProps) {
   const [open, setOpen] = useState(false);
-  const [rawValue, setRawValue] = useState('');
+  const [rawValue, setRawValue] = useState(String(suggestedNumber));
+  const [zoneValue, setZoneValue] = useState<string>(NO_ZONE_VALUE);
   const [submitState, setSubmitState] = useState<CreateTableState>({ status: 'idle' });
 
   const parsedNumber = parseInt(rawValue, 10);
@@ -50,8 +70,12 @@ export function AddTableDialog({ existingNumbers, onCreateTable }: AddTableDialo
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) {
-      setRawValue('');
+    if (next) {
+      // Re-seed the suggested number each time the dialog opens.
+      setRawValue(String(suggestedNumber));
+      setZoneValue(NO_ZONE_VALUE);
+      setSubmitState({ status: 'idle' });
+    } else {
       setSubmitState({ status: 'idle' });
     }
   }
@@ -62,11 +86,11 @@ export function AddTableDialog({ existingNumbers, onCreateTable }: AddTableDialo
 
     setSubmitState({ status: 'submitting' });
 
-    try {
-      await onCreateTable(parsedNumber);
-      setSubmitState({ status: 'success', tableNumber: parsedNumber });
+    const zoneId = zoneValue === NO_ZONE_VALUE ? undefined : zoneValue;
 
-      // Auto-close after brief success feedback
+    try {
+      await onCreateTable(parsedNumber, zoneId);
+      setSubmitState({ status: 'success', tableNumber: parsedNumber });
       window.setTimeout(() => setOpen(false), 1_500);
     } catch {
       setSubmitState({
@@ -93,7 +117,8 @@ export function AddTableDialog({ existingNumbers, onCreateTable }: AddTableDialo
         <DialogHeader>
           <DialogTitle>Agregar mesa</DialogTitle>
           <DialogDescription>
-            Ingresá el número de la nueva mesa. Se generará un código QR automáticamente.
+            Ingresá el número de la nueva mesa y, si querés, asignala a una zona.
+            Se generará un código QR automáticamente.
           </DialogDescription>
         </DialogHeader>
 
@@ -136,14 +161,13 @@ export function AddTableDialog({ existingNumbers, onCreateTable }: AddTableDialo
                 value={rawValue}
                 onChange={(e) => {
                   setRawValue(e.target.value);
-                  // Dismiss error on edit
                   if (submitState.status === 'error') {
                     setSubmitState({ status: 'idle' });
                   }
                 }}
                 required
                 disabled={isSubmitting}
-                aria-describedby={isDuplicate ? 'table-number-error' : undefined}
+                aria-describedby={isDuplicate ? 'table-number-error' : 'table-number-hint'}
                 aria-invalid={isDuplicate ? true : undefined}
                 className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
@@ -158,9 +182,37 @@ export function AddTableDialog({ existingNumbers, onCreateTable }: AddTableDialo
                 </p>
               )}
 
-              <p className="text-xs text-muted-foreground">
-                Números en uso: {existingNumbers.length > 0 ? existingNumbers.sort((a, b) => a - b).join(', ') : 'ninguno'}
+              <p id="table-number-hint" className="text-xs text-muted-foreground">
+                Números en uso:{' '}
+                {existingNumbers.length > 0
+                  ? [...existingNumbers].sort((a, b) => a - b).join(', ')
+                  : 'ninguno'}
               </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="table-zone-trigger">Zona</Label>
+              <Select
+                value={zoneValue}
+                onValueChange={(value) => setZoneValue(value ?? NO_ZONE_VALUE)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger
+                  id="table-zone-trigger"
+                  aria-label="Seleccionar zona para la nueva mesa"
+                  className="w-full"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_ZONE_VALUE}>{NO_ZONE_LABEL}</SelectItem>
+                  {zones.map((zone) => (
+                    <SelectItem key={zone.id} value={zone.id}>
+                      {zone.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </form>
         )}

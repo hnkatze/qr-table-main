@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { CopyIcon, CheckIcon, Trash2Icon, ExternalLinkIcon } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { CopyIcon, CheckIcon, Trash2Icon, ExternalLinkIcon, LinkIcon } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { buildAbsoluteTableUrl, buildQrImageUrl } from '@/features/tables/mappers/public-url.mapper';
 import type { TableCard } from '@/features/tables/types';
@@ -11,8 +11,8 @@ import type { TableCard } from '@/features/tables/types';
 
 interface TableQrCardProps {
   tableCard: TableCard;
-  /** Slug needed to build the absolute URL (e.g., 'la-ceiba'). */
-  restaurantSlug: string;
+  /** Public business token needed to build the absolute URL (e.g., 'biz_8aR2kQ9mZ'). */
+  restaurantPublicId: string;
   restaurantName: string;
   isOwner: boolean;
   onDelete: (tableId: string) => void;
@@ -134,45 +134,49 @@ function CopyLinkButton({ absoluteUrl, tableNumber }: CopyLinkButtonProps) {
  */
 export function TableQrCard({
   tableCard,
-  restaurantSlug,
+  restaurantPublicId,
   restaurantName,
   isOwner,
   onDelete,
 }: TableQrCardProps) {
   const { table, qrToken, customerUrl } = tableCard;
-  // Absolute URL is built from the rotatable qrToken, never the display number.
-  const absoluteUrl = buildAbsoluteTableUrl(restaurantSlug, qrToken);
+  // Absolute URL is built from the rotatable publicId + qrToken, never the display number.
+  const absoluteUrl = buildAbsoluteTableUrl(restaurantPublicId, qrToken);
 
   return (
     <article aria-label={`Mesa ${table.number}`}>
       <Card className="flex flex-col transition-shadow duration-200 hover:shadow-md h-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="space-y-0.5 min-w-0">
-              <CardTitle className="text-lg font-bold">
-                Mesa {table.number}
-              </CardTitle>
-              <CardDescription className="font-mono text-xs truncate">
-                {customerUrl}
-              </CardDescription>
-            </div>
-
-            {/* Accent chip */}
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            {/* Hero number — the primary way staff identify a table at a glance */}
             <span
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-sky/10 text-sm font-bold text-brand-sky ring-1 ring-brand-sky/20"
+              className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-sky/10 text-3xl font-extrabold tabular-nums leading-none text-brand-sky ring-1 ring-brand-sky/25"
               aria-hidden="true"
             >
               {table.number}
             </span>
+
+            <CardTitle className="text-lg font-bold leading-tight">
+              Mesa {table.number}
+            </CardTitle>
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-1 flex-col items-center gap-4 pt-2">
+        <CardContent className="flex flex-1 flex-col items-center gap-3 pt-0">
           <QrImage
             absoluteUrl={absoluteUrl}
             tableNumber={table.number}
             restaurantName={restaurantName}
           />
+
+          {/* Public customer URL — full width, legible, full value on hover/copy */}
+          <p
+            className="flex w-full items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 font-mono text-xs text-muted-foreground"
+            title={customerUrl}
+          >
+            <LinkIcon className="size-3 shrink-0" aria-hidden="true" />
+            <span className="truncate">{customerUrl}</span>
+          </p>
         </CardContent>
 
         <CardFooter className="flex-wrap gap-2 pt-0 border-t-0 bg-transparent">

@@ -1,6 +1,12 @@
-import { MOCK_TABLES_A, MOCK_TABLES_B, RESTAURANT_A } from '@/lib/mock-data';
+import {
+  MOCK_TABLES_A,
+  MOCK_TABLES_B,
+  MOCK_ZONES_A,
+  MOCK_ZONES_B,
+  RESTAURANT_A,
+} from '@/lib/mock-data';
 import { shortId, newQrToken } from '@/lib/id';
-import type { Table } from '@/types/restaurant';
+import type { Table, Zone } from '@/types/restaurant';
 
 /**
  * Tables service — the future Firestore boundary.
@@ -10,24 +16,44 @@ import type { Table } from '@/types/restaurant';
  * marking where the real implementation will land.
  *
  * TODO seams:
- *   - getTables      → Firestore collection query: tables filtered by restaurantId
- *   - createTable    → Firestore addDoc: tables/{id} with { restaurantId, number, qrToken }
- *   - deleteTable    → Firestore deleteDoc: tables/{id}
+ *   - getTables    → Firestore collection query: tables filtered by restaurantId
+ *   - createTable  → Firestore addDoc: tables/{id} with { restaurantId, number, zoneId, qrToken }
+ *   - deleteTable  → Firestore deleteDoc: tables/{id}
+ *   - getZones     → Firestore collection query: zones filtered by restaurantId
+ *   - createZone   → Firestore addDoc: zones/{id} with { restaurantId, name, sortOrder }
+ *   - deleteZone   → Firestore deleteDoc: zones/{id} + reassign affected tables' zoneId
  */
 
-/** In-memory store keyed by restaurantId for local mock mutations. */
-const mockStore: Map<string, Table[]> = new Map([
+// ─── In-memory stores (mock) ──────────────────────────────────────────────────
+
+/** Tables store keyed by restaurantId for local mock mutations. */
+const tablesStore: Map<string, Table[]> = new Map([
   [RESTAURANT_A.id, [...MOCK_TABLES_A]],
 ]);
 
-function getStore(restaurantId: string): Table[] {
-  if (!mockStore.has(restaurantId)) {
+/** Zones store keyed by restaurantId for local mock mutations. */
+const zonesStore: Map<string, Zone[]> = new Map([
+  [RESTAURANT_A.id, [...MOCK_ZONES_A]],
+]);
+
+function getTablesStore(restaurantId: string): Table[] {
+  if (!tablesStore.has(restaurantId)) {
     // Restaurant B and any future restaurant start from their own mock set.
     const initial = restaurantId === RESTAURANT_A.id ? [...MOCK_TABLES_A] : [...MOCK_TABLES_B];
-    mockStore.set(restaurantId, initial);
+    tablesStore.set(restaurantId, initial);
   }
-  return mockStore.get(restaurantId)!;
+  return tablesStore.get(restaurantId)!;
 }
+
+function getZonesStore(restaurantId: string): Zone[] {
+  if (!zonesStore.has(restaurantId)) {
+    const initial = restaurantId === RESTAURANT_A.id ? [...MOCK_ZONES_A] : [...MOCK_ZONES_B];
+    zonesStore.set(restaurantId, initial);
+  }
+  return zonesStore.get(restaurantId)!;
+}
+
+// ─── Tables ───────────────────────────────────────────────────────────────────
 
 /**
  * Returns all tables for a given restaurant.
@@ -36,7 +62,7 @@ function getStore(restaurantId: string): Table[] {
  */
 export async function getTables(restaurantId: string): Promise<Table[]> {
   // TODO: Firestore — return a real-time listener result instead
-  return [...getStore(restaurantId)];
+  return [...getTablesStore(restaurantId)];
 }
 
 /**
@@ -52,32 +78,36 @@ export async function getTables(restaurantId: string): Promise<Table[]> {
  * and hydrate via an onSnapshot subscription inside a useEffect.
  */
 export function getTablesSnapshot(restaurantId: string): Table[] {
-  return [...getStore(restaurantId)];
+  return [...getTablesStore(restaurantId)];
 }
 
 /**
- * Creates a new table with the given display number.
+ * Creates a new table with the given display number and optional zone.
  *
  * Identifiers follow the project data convention (.claude/rules/data-conventions.md):
  *   - `id`      = shortId('tbl')  — non-sequential, URL-safe internal PK
  *   - `qrToken` = newQrToken()    — rotatable public token used in the customer URL
  *   - `number`  = human-entered display label only; NOT an identifier
+ *   - `zoneId`  = optional; omitted ⇒ the table renders under "Sin zona"
  *
  * shortId / newQrToken are invoked here (call time inside the create handler),
  * never at module scope, to stay SSR/hydration-safe.
  *
- * TODO: Firestore — await addDoc(collection(db, 'tables'), { restaurantId, number, qrToken, createdAt })
+ * TODO: Firestore — await addDoc(collection(db, 'tables'), { restaurantId, number, zoneId, qrToken, createdAt })
  */
 export async function createTable(
   restaurantId: string,
-  tableNumber: number
+  tableNumber: number,
+  zoneId?: string
 ): Promise<Table> {
   // TODO: Firestore — persist new table document and return the created entity
-  const store = getStore(restaurantId);
+  const store = getTablesStore(restaurantId);
   const newTable: Table = {
     id: shortId('tbl'),
     number: tableNumber,
     qrToken: newQrToken(),
+    // Only set zoneId when one was chosen — keep the field absent otherwise.
+    ...(zoneId ? { zoneId } : {}),
   };
   store.push(newTable);
   return newTable;
@@ -93,9 +123,84 @@ export async function deleteTable(
   tableId: string
 ): Promise<void> {
   // TODO: Firestore — delete the table document
-  const store = getStore(restaurantId);
+  const store = getTablesStore(restaurantId);
   const idx = store.findIndex((t) => t.id === tableId);
   if (idx !== -1) {
     store.splice(idx, 1);
+  }
+}
+
+// ─── Zones ────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns all zones for a given restaurant.
+ * Today: reads from the in-memory mock store seeded from MOCK_ZONES_A / MOCK_ZONES_B.
+ * TODO: Firestore — query the `zones` collection where restaurantId == restaurantId.
+ */
+export async function getZones(restaurantId: string): Promise<Zone[]> {
+  // TODO: Firestore — return a real-time listener result instead
+  return [...getZonesStore(restaurantId)];
+}
+
+/**
+ * Synchronous snapshot of the current zones for a restaurant.
+ * Same rationale as getTablesSnapshot — used for the hook's first-paint seed.
+ *
+ * TODO: Firestore — remove this; hydrate via onSnapshot in a useEffect.
+ */
+export function getZonesSnapshot(restaurantId: string): Zone[] {
+  return [...getZonesStore(restaurantId)];
+}
+
+/**
+ * Creates a new zone with the given name.
+ *
+ * The new zone id is generated with shortId('zone') per the data convention.
+ * sortOrder is appended after the current max so new zones land at the end.
+ *
+ * TODO: Firestore — await addDoc(collection(db, 'zones'), { restaurantId, name, sortOrder })
+ */
+export async function createZone(
+  restaurantId: string,
+  name: string
+): Promise<Zone> {
+  // TODO: Firestore — persist new zone document and return the created entity
+  const store = getZonesStore(restaurantId);
+  const maxSortOrder = store.reduce((max, z) => Math.max(max, z.sortOrder), 0);
+  const newZone: Zone = {
+    id: shortId('zone'),
+    restaurantId,
+    name,
+    sortOrder: maxSortOrder + 1,
+  };
+  store.push(newZone);
+  return newZone;
+}
+
+/**
+ * Deletes a zone and REASSIGNS its tables to no zone (zoneId undefined) — the
+ * tables themselves are kept and simply move to the "Sin zona" group.
+ *
+ * Today: mutates the in-memory stores.
+ * TODO: Firestore — a batched write:
+ *   1. for each table where zoneId == zoneId → update { zoneId: deleteField() }
+ *   2. deleteDoc(doc(db, 'zones', zoneId))
+ */
+export async function deleteZone(
+  restaurantId: string,
+  zoneId: string
+): Promise<void> {
+  // TODO: Firestore — batch: reassign affected tables, then delete the zone doc
+  const tables = getTablesStore(restaurantId);
+  for (const table of tables) {
+    if (table.zoneId === zoneId) {
+      delete table.zoneId;
+    }
+  }
+
+  const zones = getZonesStore(restaurantId);
+  const idx = zones.findIndex((z) => z.id === zoneId);
+  if (idx !== -1) {
+    zones.splice(idx, 1);
   }
 }

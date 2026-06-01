@@ -1,38 +1,50 @@
 /**
  * Builds the public customer URL for a given restaurant table.
  *
- * Pattern: /r/[restaurantSlug]/t/[qrToken]
+ * Pattern: /r/[publicId]/t/[qrToken]
  *
- * The URL uses the rotatable `qrToken` — NOT the table number. The number is a
- * human-facing display label only (see .claude/rules/data-conventions.md):
- * tokens are non-guessable and can be rotated if a QR leaks or is reprinted.
+ * Both segments are rotatable public tokens — NOT the restaurant slug and NOT the
+ * table number (see .claude/rules/data-conventions.md):
+ *   - `publicId` identifies the business; unguessable and rotatable.
+ *   - `qrToken` identifies the table; unguessable and rotatable.
+ * The table number is a human-facing display label only and never appears here.
  *
  * Pure function — no side effects, no state.
  * When the routing convention changes, only this mapper needs updating.
  *
  * @example
- *   buildTableUrl('la-ceiba', 'qr-la-ceiba-t1')
- *   // → '/r/la-ceiba/t/qr-la-ceiba-t1'
+ *   buildTableUrl('biz_8aR2kQ9mZ', 'qr_7Kp2Qx9aZ3mN')
+ *   // → '/r/biz_8aR2kQ9mZ/t/qr_7Kp2Qx9aZ3mN'
  */
-export function buildTableUrl(restaurantSlug: string, qrToken: string): string {
-  return `/r/${restaurantSlug}/t/${qrToken}`;
+export function buildTableUrl(publicId: string, qrToken: string): string {
+  return `/r/${publicId}/t/${qrToken}`;
 }
 
 /**
- * Builds the absolute customer URL (for QR generation and copy-to-clipboard).
+ * Public customer site origin where QR codes point — the landing/customer domain,
+ * NOT this admin app and NOT `window.location.origin`.
  *
- * Uses the current window.location.origin on the client.
- * Falls back to a relative URL when called during SSR.
+ * Why a fixed origin (no `window`):
+ *   - **Stable across SSR and client**, so the QR `<img>` src/alt is identical on
+ *     the server and on hydration. Reading `window` here returned a relative URL on
+ *     the server and an absolute one on the client → a hydration mismatch.
+ *   - **Correct target**: the QR is scanned by customers, so it must point at the
+ *     public site, never at the admin backoffice this app runs on.
+ *
+ * Inlined at build time via `NEXT_PUBLIC_SITE_URL` (same value on server + client).
+ */
+const PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mesa.app';
+
+/**
+ * Builds the absolute customer URL (for QR generation and copy-to-clipboard).
+ * Stable across SSR/client — no `window`.
  *
  * @example
- *   buildAbsoluteTableUrl('la-ceiba', 'qr-la-ceiba-t1')
- *   // → 'https://mesa.hn/r/la-ceiba/t/qr-la-ceiba-t1'  (on the real domain)
- *   // → 'http://localhost:3000/r/la-ceiba/t/qr-la-ceiba-t1'  (in dev)
+ *   buildAbsoluteTableUrl('biz_8aR2kQ9mZ', 'qr_7Kp2Qx9aZ3mN')
+ *   // → 'https://mesa.app/r/biz_8aR2kQ9mZ/t/qr_7Kp2Qx9aZ3mN'
  */
-export function buildAbsoluteTableUrl(restaurantSlug: string, qrToken: string): string {
-  const path = buildTableUrl(restaurantSlug, qrToken);
-  if (typeof window === 'undefined') return path; // SSR guard
-  return `${window.location.origin}${path}`;
+export function buildAbsoluteTableUrl(publicId: string, qrToken: string): string {
+  return `${PUBLIC_SITE_URL}${buildTableUrl(publicId, qrToken)}`;
 }
 
 /**
