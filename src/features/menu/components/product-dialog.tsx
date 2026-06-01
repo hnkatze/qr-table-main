@@ -251,7 +251,7 @@ export function ProductDialog({
               </Label>
               <Select
                 value={fields.categoryId}
-                onValueChange={(v) => updateField('categoryId', v)}
+                onValueChange={(v) => updateField('categoryId', v ?? '')}
                 disabled={isMutating}
               >
                 <SelectTrigger
