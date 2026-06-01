@@ -10,15 +10,17 @@ interface StatTileProps {
   colorBg: string;
   colorText: string;
   colorBorder: string;
+  /** Ring color for the icon chip — a `ring-*` class (NOT a `border-*` class). */
+  colorRing: string;
 }
 
-function StatTile({ icon: Icon, label, value, colorBg, colorText, colorBorder }: StatTileProps) {
+function StatTile({ icon: Icon, label, value, colorBg, colorText, colorBorder, colorRing }: StatTileProps) {
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${colorBg} ${colorBorder} transition-shadow duration-200 hover:shadow-sm`}
     >
       <span
-        className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${colorBg} ring-1 ${colorBorder}`}
+        className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${colorBg} ring-1 ring-inset ${colorRing}`}
         aria-hidden="true"
       >
         <Icon className={`size-4 ${colorText}`} />
@@ -60,6 +62,7 @@ export function StatStrip({ members, restaurantName }: StatStripProps) {
         colorBg="bg-muted/60"
         colorText="text-foreground"
         colorBorder="border-border"
+        colorRing="ring-border"
       />
       <StatTile
         icon={ShieldCheckIcon}
@@ -68,6 +71,7 @@ export function StatStrip({ members, restaurantName }: StatStripProps) {
         colorBg="bg-brand-emerald/10"
         colorText="text-brand-emerald"
         colorBorder="border-brand-emerald/20"
+        colorRing="ring-brand-emerald/20"
       />
       <StatTile
         icon={UserIcon}
@@ -76,6 +80,7 @@ export function StatStrip({ members, restaurantName }: StatStripProps) {
         colorBg="bg-brand-sky/10"
         colorText="text-brand-sky"
         colorBorder="border-brand-sky/20"
+        colorRing="ring-brand-sky/20"
       />
     </div>
   );
