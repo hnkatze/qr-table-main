@@ -4,7 +4,7 @@
  */
 
 import type { User } from '@/types/user';
-import type { Restaurant, Table } from '@/types/restaurant';
+import type { Restaurant, Table, Zone } from '@/types/restaurant';
 import type { Membership, RestaurantMembership } from '@/types/membership';
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -37,9 +37,11 @@ export const MOCK_USERS: User[] = [
 
 // ─── Restaurants ──────────────────────────────────────────────────────────────
 
+// publicId is PUBLIC (it goes in the customer URL /r/[publicId]/...), so it MUST
+// be unguessable — a real long random token, never the business name/slug.
 export const RESTAURANT_A: Restaurant = {
   id: 'rest_a_001',
-  slug: 'la-ceiba',
+  publicId: 'Rk9xQm2pVnL4bT7w',
   name: 'La Ceiba',
   tagline: 'Sabores hondureños auténticos',
   currency: 'HNL',
@@ -47,7 +49,7 @@ export const RESTAURANT_A: Restaurant = {
 
 export const RESTAURANT_B: Restaurant = {
   id: 'rest_b_002',
-  slug: 'el-mercado',
+  publicId: 'Hd3yPj8mZc5Nf1Ws',
   name: 'El Mercado',
   tagline: 'Cocina de mercado, ingredientes frescos',
   currency: 'HNL',
@@ -55,17 +57,32 @@ export const RESTAURANT_B: Restaurant = {
 
 export const MOCK_RESTAURANTS: Restaurant[] = [RESTAURANT_A, RESTAURANT_B];
 
+// ─── Zones ────────────────────────────────────────────────────────────────────
+
+// La Ceiba has two zones; El Mercado has none yet (its tables show under "Sin zona").
+export const MOCK_ZONES_A: Zone[] = [
+  { id: 'zone_a_patio', restaurantId: 'rest_a_001', name: 'Patio', sortOrder: 1 },
+  { id: 'zone_a_terraza', restaurantId: 'rest_a_001', name: 'Terraza', sortOrder: 2 },
+];
+
+export const MOCK_ZONES_B: Zone[] = [];
+
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
+// qrToken is PUBLIC (it goes in the customer URL), so it MUST be unguessable —
+// a real short random token, never a predictable pattern like `qr-<slug>-t<n>`.
+// The internal `id` may stay readable since it is private. See
+// `.claude/rules/data-conventions.md` and `src/lib/id.ts` (newQrToken()).
+// `zoneId` is optional — tables without one render under "Sin zona".
 export const MOCK_TABLES_A: Table[] = [
-  { id: 'tbl_a1', number: 1, qrToken: 'qr-la-ceiba-t1' },
-  { id: 'tbl_a2', number: 2, qrToken: 'qr-la-ceiba-t2' },
-  { id: 'tbl_a3', number: 3, qrToken: 'qr-la-ceiba-t3' },
+  { id: 'tbl_a1', number: 1, zoneId: 'zone_a_patio', qrToken: 'qr_7Kp2Qx9aZ3mN' },
+  { id: 'tbl_a2', number: 2, zoneId: 'zone_a_patio', qrToken: 'qr_W4bV8sLp1qXr' },
+  { id: 'tbl_a3', number: 3, zoneId: 'zone_a_terraza', qrToken: 'qr_9Rt5Hn3Kf6Dy' },
 ];
 
 export const MOCK_TABLES_B: Table[] = [
-  { id: 'tbl_b1', number: 1, qrToken: 'qr-el-mercado-t1' },
-  { id: 'tbl_b2', number: 2, qrToken: 'qr-el-mercado-t2' },
+  { id: 'tbl_b1', number: 1, qrToken: 'qr_2Mw8Jc4Vb7Lx' },
+  { id: 'tbl_b2', number: 2, qrToken: 'qr_6Pq3Yd9Sn1Zk' },
 ];
 
 // ─── Memberships ──────────────────────────────────────────────────────────────

@@ -43,9 +43,18 @@ export function shortId(prefix?: string, size: number = DEFAULT_SIZE): string {
 }
 
 /**
- * Generate a fresh public QR token (rotatable independently of an entity id).
+ * Generate a fresh public QR token for a TABLE (rotatable, independent of the id).
  * Rotating a QR = call this again and store the new token; the entity id is unchanged.
  */
 export function newQrToken(): string {
   return shortId('qr');
+}
+
+/**
+ * Generate a fresh public BUSINESS token (rotatable, independent of the id).
+ * Longer than a table token and prefix-less so the customer URL stays clean:
+ * `/r/[publicId]/t/[qrToken]`. Never the internal restaurant id.
+ */
+export function newPublicId(): string {
+  return shortId(undefined, 16);
 }

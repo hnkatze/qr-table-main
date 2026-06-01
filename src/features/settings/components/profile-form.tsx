@@ -41,8 +41,6 @@ export function ProfileForm({ restaurant, isOwner }: ProfileFormProps) {
 
   // Stable IDs for a11y label → input association
   const nameId = useId();
-  const slugId = useId();
-  const slugHintId = useId();
   const taglineId = useId();
   const currencyId = useId();
 
@@ -92,7 +90,7 @@ export function ProfileForm({ restaurant, isOwner }: ProfileFormProps) {
         {/* ── Section 1: Identidad ──────────────────────────────────────── */}
         <SettingsSection
           title="Identidad"
-          description="El nombre y el slug son la cara pública de tu restaurante."
+          description="El nombre es la cara pública de tu restaurante."
           accentClass="bg-brand-emerald"
         >
           <fieldset className="border-0 m-0 p-0" disabled={fieldDisabled}>
@@ -116,37 +114,6 @@ export function ProfileForm({ restaurant, isOwner }: ProfileFormProps) {
                   disabled={fieldDisabled}
                   className="h-9 text-sm"
                 />
-              </div>
-
-              {/* Slug */}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor={slugId}>
-                  Slug{' '}
-                  <span aria-hidden="true" className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id={slugId}
-                  type="text"
-                  value={fields.slug}
-                  onChange={(e) =>
-                    updateField(
-                      'slug',
-                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')
-                    )
-                  }
-                  placeholder="la-ceiba"
-                  required
-                  pattern="[a-z0-9][a-z0-9-]*"
-                  aria-describedby={slugHintId}
-                  disabled={fieldDisabled}
-                  className="h-9 font-mono text-sm"
-                />
-                <p id={slugHintId} className="text-xs text-muted-foreground">
-                  Menú público en{' '}
-                  <span className="font-medium text-foreground">
-                    /r/{fields.slug || 'tu-slug'}
-                  </span>
-                </p>
               </div>
 
               {/* Tagline */}

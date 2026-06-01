@@ -17,7 +17,6 @@ function isCurrencyCode(value: string): value is CurrencyCode {
 export function restaurantToFormFields(restaurant: Restaurant): FormFields {
   return {
     name: restaurant.name,
-    slug: restaurant.slug,
     tagline: restaurant.tagline ?? '',
     currency: isCurrencyCode(restaurant.currency) ? restaurant.currency : 'HNL',
   };

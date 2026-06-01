@@ -27,33 +27,44 @@ locate a table. It is NOT an identifier:
 - It can be reordered.
 - It MUST NOT appear in public URLs or be used as a key.
 
-## Public customer URLs use the rotatable `qrToken`
+## Public customer URLs use rotatable tokens — nothing guessable
 
-The QR a customer scans points at the table via its **`qrToken`** — a dedicated,
-rotatable token separate from the entity id — never the `number` and never the id:
+Both segments of the customer URL are **dedicated public tokens**, separate from
+internal ids, and rotatable. Nothing in the URL is enumerable or reveals a name:
 
 ```
-/r/[slug]/t/[qrToken]      ✅   e.g. /r/la-ceiba/t/qr_3bV8sLp1Wq2X
-/r/[slug]/t/[number]       ❌   guessable, unstable
+/r/[publicId]/t/[qrToken]               ✅   e.g. /r/Rk9xQm2pVnL4bT7w/t/qr_aB3xK9
+/r/[slug]/t/[number]                    ❌   guessable, leaks the business name
 ```
 
-Why a separate token (not the id):
+- **Business** → `Restaurant.publicId` (longer token, `newPublicId()` in
+  `src/lib/id.ts`). Identifies the business in the URL without exposing its id or name.
+- **Table** → `Table.qrToken` (shorter token, `newQrToken()`). Never the `number`,
+  never the id.
 
-- **Not guessable** — `/t/1`, `/t/2` would let anyone enumerate tables.
-- **Rotatable** — if a QR leaks or is reprinted, generate a new `qrToken`
-  (`newQrToken()` in `src/lib/id.ts`) while keeping the same entity `id` and all
-  related orders intact.
+Why dedicated tokens (not ids, not slugs):
+
+- **Not guessable** — `/r/la-ceiba/t/1` lets anyone enumerate tables and harvest
+  business names. Opaque tokens prevent both.
+- **Rotatable** — if a QR leaks or is reprinted, mint a new token while keeping the
+  same entity `id` and all related orders/tables intact.
 
 ```ts
+Restaurant {
+  id: 'rest_a_001',          // internal PK
+  publicId: 'Rk9xQm2pVnL4bT7w', // goes in the public URL; rotate freely
+  name: 'La Ceiba',          // admin/display
+}
 Table {
-  id: 'tbl_9Fk2p',        // internal PK (shortId)
-  number: 1,              // display only
-  qrToken: 'qr_aB3xK9',   // goes in the public URL; rotate freely
+  id: 'tbl_9Fk2p',           // internal PK
+  number: 1,                 // display only
+  qrToken: 'qr_aB3xK9',      // goes in the public URL; rotate freely
 }
 ```
 
-> This supersedes the `/r/[slug]/t/[tableNumber]` shape mentioned in
-> `ADMIN_PROJECT.md` — the number was for humans, not for the URL.
+> There is **no `slug`** on `Restaurant` — the admin shows `name`; the customer URL
+> uses `publicId`. This supersedes the `/r/[slug]/t/[tableNumber]` shape in
+> `ADMIN_PROJECT.md` — both the slug and the number were never meant for the URL.
 
 ## Related
 

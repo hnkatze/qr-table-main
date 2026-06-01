@@ -8,7 +8,6 @@ export type CurrencyCode = (typeof CURRENCY_OPTIONS)[number]['value'];
 
 export interface FormFields {
   name: string;
-  slug: string;
   tagline: string;
   currency: CurrencyCode;
 }

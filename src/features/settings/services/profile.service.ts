@@ -9,7 +9,6 @@ import type { FormFields } from '../types';
  *
  *   await updateDoc(doc(db, 'restaurants', restaurantId), {
  *     name: fields.name,
- *     slug: fields.slug,
  *     tagline: fields.tagline || null,
  *     currency: fields.currency,
  *     updatedAt: serverTimestamp(),
