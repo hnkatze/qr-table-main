@@ -9,14 +9,18 @@ import {
 } from '@/features/tables/services/tables.service';
 import { buildTableUrl } from '@/features/tables/mappers/public-url.mapper';
 import { groupTablesByZone } from '@/features/tables/mappers/group-tables-by-zone.mapper';
-import type { TableCard, ZoneGroup } from '@/features/tables/types';
+import { deriveTableLimit } from '@/features/tables/mappers/table-limit.mapper';
+import type { TableCard, ZoneGroup, TableLimitInfo } from '@/features/tables/types';
 import type { Table, Zone } from '@/types/restaurant';
+import { getPlanById } from '@/lib/mock-data';
 
 // ─── Input / Output ───────────────────────────────────────────────────────────
 
 interface UseTablesInput {
   restaurantId: string | null;
   restaurantPublicId: string | null;
+  /** The active restaurant's plan id — gates how many tables can be created. */
+  planId: string | null;
 }
 
 export interface UseTablesOutput {
@@ -28,6 +32,8 @@ export interface UseTablesOutput {
   existingNumbers: number[];
   /** Total table count — for empty-state branching in the page. */
   totalTables: number;
+  /** Plan-based table usage (used / max / remaining / isAtLimit). */
+  tableLimit: TableLimitInfo;
   /** Owner action: create a table with the given number and optional zone. */
   handleCreateTable: (tableNumber: number, zoneId?: string) => Promise<void>;
   /** Owner action: delete a table by id. Optimistic local update. */
@@ -77,7 +83,7 @@ function sortZones(zones: Zone[]): Zone[] {
  * first paint. When Firestore lands, replace the internals with onSnapshot
  * subscriptions inside a useEffect.
  */
-export function useTables({ restaurantId, restaurantPublicId }: UseTablesInput): UseTablesOutput {
+export function useTables({ restaurantId, restaurantPublicId, planId }: UseTablesInput): UseTablesOutput {
   // Seed initial tables + zones synchronously — avoids a loading flash on first paint.
   const [localTables, setLocalTables] = useState<Table[]>(() =>
     restaurantId ? getTablesSnapshot(restaurantId) : []
@@ -100,10 +106,18 @@ export function useTables({ restaurantId, restaurantPublicId }: UseTablesInput):
     }
   }
 
+  // ── Plan limit (derived) ────────────────────────────────────────────────────
+  // Resolve the active plan's limits from the shared catalog. This is the seam
+  // where the tenant Tables feature reads PLATFORM data (plans) without owning it.
+  const planLimits = planId ? getPlanById(planId)?.limits ?? null : null;
+  const tableLimit = deriveTableLimit(localTables.length, planLimits);
+
   // ── Table handlers ────────────────────────────────────────────────────────────
 
   async function handleCreateTable(tableNumber: number, zoneId?: string): Promise<void> {
     if (!restaurantId) return;
+    // Enforce the plan ceiling — never create beyond what the plan allows.
+    if (tableLimit.isAtLimit) return;
     const created = await createTable(restaurantId, tableNumber, zoneId);
     setLocalTables((prev) => [...prev, created]);
   }
@@ -150,6 +164,7 @@ export function useTables({ restaurantId, restaurantPublicId }: UseTablesInput):
     zones,
     existingNumbers,
     totalTables: localTables.length,
+    tableLimit,
     handleCreateTable,
     handleDeleteTable,
     handleCreateZone,

@@ -28,6 +28,7 @@ export default function TablesPage() {
     zones,
     existingNumbers,
     totalTables,
+    tableLimit,
     handleCreateTable,
     handleDeleteTable,
     handleCreateZone,
@@ -35,6 +36,7 @@ export default function TablesPage() {
   } = useTables({
     restaurantId: activeRestaurant?.id ?? null,
     restaurantPublicId: activeRestaurant?.publicId ?? null,
+    planId: activeRestaurant?.subscription.planId ?? null,
   });
 
   // ── No restaurant selected ─────────────────────────────────────────────────
@@ -70,6 +72,7 @@ export default function TablesPage() {
         suggestedNumber={suggestedNumber}
         zones={zones}
         existingZoneNames={existingZoneNames}
+        tableLimit={tableLimit}
         onCreateTable={handleCreateTable}
         onCreateZone={handleCreateZone}
       />

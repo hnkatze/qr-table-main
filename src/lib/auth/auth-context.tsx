@@ -10,6 +10,8 @@ import {
 import type { User } from '@/types/user';
 import type { Restaurant } from '@/types/restaurant';
 import type { Role, RestaurantMembership } from '@/types/membership';
+import type { PlatformRole } from '@/types/platform';
+import { hasPermission, type Permission } from '@/lib/permissions';
 import {
   MOCK_CURRENT_USER,
   MOCK_CURRENT_USER_MEMBERSHIPS,
@@ -185,4 +187,36 @@ export function useActiveRole(): Role | null {
       m.userId === currentUser.id && m.restaurantId === activeRestaurant.id
   );
   return membership?.role ?? null;
+}
+
+/**
+ * The current user's GLOBAL platform role (e.g. 'superadmin'), or null.
+ * This is the plane ABOVE tenants — independent of the active restaurant.
+ */
+export function usePlatformRole(): PlatformRole | null {
+  const { currentUser } = useAuth();
+  return currentUser?.platformRole ?? null;
+}
+
+/** True when the current user is a platform-level administrator (SaaS owner). */
+export function useIsPlatformAdmin(): boolean {
+  return usePlatformRole() === 'superadmin';
+}
+
+/**
+ * Whether the current user holds a capability, checked across BOTH planes:
+ *   - platform permissions (`platform:*`) come from the global platformRole
+ *   - tenant permissions (`tenant:*`) come from the active-restaurant role
+ *
+ * Permissions are namespaced, so OR-ing the two role lookups is correct: a
+ * superadmin gets `platform:*`, an owner gets `tenant:*`, and a user who is
+ * both gets both.
+ */
+export function useHasPermission(permission: Permission): boolean {
+  const platformRole = usePlatformRole();
+  const activeRole = useActiveRole();
+  return (
+    hasPermission(platformRole, permission) ||
+    hasPermission(activeRole, permission)
+  );
 }

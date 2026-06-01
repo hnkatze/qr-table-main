@@ -1,9 +1,6 @@
 import {
-  MOCK_TABLES_A,
-  MOCK_TABLES_B,
-  MOCK_ZONES_A,
-  MOCK_ZONES_B,
-  RESTAURANT_A,
+  MOCK_TABLES_BY_RESTAURANT,
+  MOCK_ZONES_BY_RESTAURANT,
 } from '@/lib/mock-data';
 import { shortId, newQrToken } from '@/lib/id';
 import type { Table, Zone } from '@/types/restaurant';
@@ -27,28 +24,22 @@ import type { Table, Zone } from '@/types/restaurant';
 // ─── In-memory stores (mock) ──────────────────────────────────────────────────
 
 /** Tables store keyed by restaurantId for local mock mutations. */
-const tablesStore: Map<string, Table[]> = new Map([
-  [RESTAURANT_A.id, [...MOCK_TABLES_A]],
-]);
+const tablesStore: Map<string, Table[]> = new Map();
 
 /** Zones store keyed by restaurantId for local mock mutations. */
-const zonesStore: Map<string, Zone[]> = new Map([
-  [RESTAURANT_A.id, [...MOCK_ZONES_A]],
-]);
+const zonesStore: Map<string, Zone[]> = new Map();
 
 function getTablesStore(restaurantId: string): Table[] {
   if (!tablesStore.has(restaurantId)) {
-    // Restaurant B and any future restaurant start from their own mock set.
-    const initial = restaurantId === RESTAURANT_A.id ? [...MOCK_TABLES_A] : [...MOCK_TABLES_B];
-    tablesStore.set(restaurantId, initial);
+    // Seed each restaurant from its OWN mock set (empty if it has none).
+    tablesStore.set(restaurantId, [...(MOCK_TABLES_BY_RESTAURANT[restaurantId] ?? [])]);
   }
   return tablesStore.get(restaurantId)!;
 }
 
 function getZonesStore(restaurantId: string): Zone[] {
   if (!zonesStore.has(restaurantId)) {
-    const initial = restaurantId === RESTAURANT_A.id ? [...MOCK_ZONES_A] : [...MOCK_ZONES_B];
-    zonesStore.set(restaurantId, initial);
+    zonesStore.set(restaurantId, [...(MOCK_ZONES_BY_RESTAURANT[restaurantId] ?? [])]);
   }
   return zonesStore.get(restaurantId)!;
 }

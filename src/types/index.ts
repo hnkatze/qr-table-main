@@ -1,6 +1,11 @@
-export type { Restaurant, Table } from './restaurant';
+export type { Restaurant, Table, Zone } from './restaurant';
 export type { User } from './user';
 export type { Role, Membership, RestaurantMembership } from './membership';
 export { ROLES } from './membership';
+export type { PlatformRole } from './platform';
+export { PLATFORM_ROLES } from './platform';
+export type { Plan, PlanLimits } from './plan';
+export type { Subscription, SubscriptionStatus } from './subscription';
+export { SUBSCRIPTION_STATUSES } from './subscription';
 export type { Category, Product } from './menu';
 export type { OrderStatus, OrderItem, Order } from './order';

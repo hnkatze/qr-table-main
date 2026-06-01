@@ -34,6 +34,8 @@ interface AddTableDialogProps {
   zones: ZoneOption[];
   /** Suggested next number (max existing + 1, defaults to 1). */
   suggestedNumber: number;
+  /** When true, the plan's table ceiling is reached — the trigger is disabled. */
+  atLimit?: boolean;
   onCreateTable: (tableNumber: number, zoneId?: string) => Promise<void>;
 }
 
@@ -56,6 +58,7 @@ export function AddTableDialog({
   existingNumbers,
   zones,
   suggestedNumber,
+  atLimit = false,
   onCreateTable,
 }: AddTableDialogProps) {
   const [open, setOpen] = useState(false);
@@ -106,7 +109,15 @@ export function AddTableDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button className="gap-2 bg-brand-sky text-white hover:bg-brand-sky/90 focus-visible:ring-brand-sky/40">
+          <Button
+            disabled={atLimit}
+            aria-label={
+              atLimit
+                ? 'Llegaste al límite de mesas de tu plan'
+                : undefined
+            }
+            className="gap-2 bg-brand-sky text-white hover:bg-brand-sky/90 focus-visible:ring-brand-sky/40 disabled:bg-brand-sky/50"
+          >
             <PlusIcon aria-hidden="true" />
             Agregar mesa
           </Button>

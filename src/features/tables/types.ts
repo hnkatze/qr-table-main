@@ -45,3 +45,15 @@ export interface ZoneOption {
   id: string;
   name: string;
 }
+
+/**
+ * The active restaurant's table-usage against its plan limit.
+ * Derived from the plan's `limits.maxTables` and the current table count.
+ * `max` is null when the plan is unknown (no enforced ceiling).
+ */
+export interface TableLimitInfo {
+  used: number;
+  max: number | null;
+  remaining: number | null;
+  isAtLimit: boolean;
+}
