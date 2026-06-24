@@ -12,6 +12,7 @@ import {
   Building2,
   CreditCard,
   ShieldCheck,
+  Receipt,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsPlatformAdmin } from '@/lib/auth/auth-context';
@@ -38,6 +39,7 @@ const MAIN_ITEMS: NavItem[] = [
   { label: 'Mesas', href: '/tables', icon: QrCode },
   { label: 'Usuarios', href: '/users', icon: Users },
   { label: 'Configuración', href: '/settings', icon: Settings },
+  { label: 'Suscripción', href: '/subscription', icon: Receipt },
 ];
 
 /** Platform-scoped nav — only visible to a platform admin (SaaS owner). */
