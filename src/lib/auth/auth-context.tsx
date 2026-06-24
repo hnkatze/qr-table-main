@@ -142,11 +142,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  // No valid session → bounce to login (the Proxy also guards, this covers the
-  // case where the cookie is present but the session cookie failed verification).
+  // No valid session → clear the (possibly stale) cookie FIRST, then bounce to
+  // login. Clearing is essential: the Proxy only checks cookie presence, so if
+  // we redirect while an invalid cookie is still set, it bounces us back to the
+  // dashboard and we loop. signOutAction() deletes it, breaking the cycle.
   useEffect(() => {
     if (profile.status === 'unauthenticated') {
-      window.location.assign('/login');
+      void signOutAction().finally(() => window.location.assign('/login'));
     }
   }, [profile.status]);
 

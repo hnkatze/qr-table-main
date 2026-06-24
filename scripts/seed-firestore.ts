@@ -37,22 +37,27 @@ const SEED_ADMIN_USERNAME =
   process.env.SEED_ADMIN_USERNAME ?? MOCK_CURRENT_USER.username;
 const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? MOCK_CURRENT_USER.email;
 const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'mesa1234';
+const SEED_DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD ?? 'mesa1234';
 
-/** Create or update the single Auth login, pinning its uid to the mock user id. */
-async function seedAuthUser(): Promise<void> {
-  const uid = MOCK_CURRENT_USER.id;
-  const payload = {
-    email: SEED_ADMIN_EMAIL,
-    password: SEED_ADMIN_PASSWORD,
-    displayName: MOCK_CURRENT_USER.displayName,
-  };
+/**
+ * Create or update an Auth login for every mock user, pinning each uid to the
+ * mock user id so Auth, the Firestore profile, and memberships line up. The
+ * admin keeps its overridable email/password; everyone else gets the default.
+ */
+async function seedAuthUsers(): Promise<void> {
+  for (const user of MOCK_USERS) {
+    const isAdmin = user.id === MOCK_CURRENT_USER.id;
+    const email = isAdmin ? SEED_ADMIN_EMAIL : user.email;
+    const password = isAdmin ? SEED_ADMIN_PASSWORD : SEED_DEFAULT_PASSWORD;
+    const payload = { email, password, displayName: user.displayName };
 
-  try {
-    await adminAuth.updateUser(uid, payload);
-    console.log(`[seed] auth: updated ${uid} (${SEED_ADMIN_EMAIL})`);
-  } catch {
-    await adminAuth.createUser({ uid, ...payload });
-    console.log(`[seed] auth: created ${uid} (${SEED_ADMIN_EMAIL})`);
+    try {
+      await adminAuth.updateUser(user.id, payload);
+      console.log(`[seed] auth: updated ${user.username} (${email})`);
+    } catch {
+      await adminAuth.createUser({ uid: user.id, ...payload });
+      console.log(`[seed] auth: created ${user.username} (${email})`);
+    }
   }
 }
 
@@ -70,7 +75,7 @@ async function seedCollection<TDoc extends { id: string }>(
 }
 
 async function main(): Promise<void> {
-  await seedAuthUser();
+  await seedAuthUsers();
 
   await seedCollection('plans', MOCK_PLANS);
 
