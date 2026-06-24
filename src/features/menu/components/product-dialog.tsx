@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useId, useRef } from 'react';
+import { useState, useId, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { ImageIcon } from 'lucide-react';
 import {
@@ -112,6 +112,18 @@ export function ProductDialog({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // The dialog stays mounted, so re-seed the form whenever it opens (or the
+  // target product changes) — otherwise edit would show the stale initial state.
+  useEffect(() => {
+    if (!open) return;
+    setFields(
+      isEdit && product
+        ? productToFields(product, defaultCategoryId)
+        : emptyFields(defaultCategoryId)
+    );
+    setError(null);
+  }, [open, product, isEdit, defaultCategoryId]);
 
   // Stable IDs for a11y
   const nameId = useId();
