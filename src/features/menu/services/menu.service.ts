@@ -1,145 +1,138 @@
-import type { Category, Product } from '@/features/menu/types';
-import type { CategoryFields, ProductFields } from '@/features/menu/types';
-import {
-  MOCK_CATEGORIES_BY_RESTAURANT,
-  MOCK_PRODUCTS_BY_RESTAURANT,
-} from './menu-mock-data';
-import { MOCK_WRITE_DELAY_MS } from '@/features/menu/constants';
+'use server';
 
 /**
- * Menu service — the future Firestore boundary.
+ * Menu service — real Firestore implementation (Server Actions, Admin SDK).
  *
- * All functions are async to match the eventual shape.
- * Today they operate on mock data; the hook applies changes locally (optimistic).
- * Each function has a seam comment marking where the real implementation lands.
+ * Data lives in two flat top-level collections, each doc stamped with
+ * `restaurantId` for query-by-restaurant (same shape as the rest of the seed):
+ *   - categories/{categoryId}
+ *   - products/{productId}
  *
- * TODO seams:
- *   - getCategories  → Firestore: collection('restaurants/{id}/categories') orderBy sortOrder
- *   - getProducts    → Firestore: collection('restaurants/{id}/products')
- *   - createCategory → Firestore: addDoc to categories sub-collection
- *   - updateCategory → Firestore: updateDoc on the category document
- *   - deleteCategory → Firestore: deleteDoc; also cascade-delete child products
- *   - createProduct  → Firestore: addDoc to products sub-collection
- *   - updateProduct  → Firestore: updateDoc on the product document
- *   - deleteProduct  → Firestore: deleteDoc
- *   - toggleProductAvailability → Firestore: updateDoc with { available: !current }
+ * Every call authorizes the current user against the restaurant via
+ * requireMembership(), so Firestore can stay locked and the client never writes
+ * directly. Mutations persist the full domain object the hook already built, so
+ * the optimistic id in the UI and the stored id always match.
  */
+
+import { adminDb } from '@/lib/firebase/admin';
+import { requireMembership } from '@/lib/auth/server-session';
+import type { Category, Product } from '@/features/menu/types';
+
+const CATEGORIES = 'categories';
+const PRODUCTS = 'products';
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
-/**
- * Returns all categories for a restaurant, sorted by sortOrder.
- * TODO: Firestore — real-time listener on `restaurants/{id}/categories`.
- */
 export async function getCategories(restaurantId: string): Promise<Category[]> {
-  // TODO: Firestore — subscribe to categories sub-collection
-  return MOCK_CATEGORIES_BY_RESTAURANT[restaurantId] ?? [];
+  await requireMembership(restaurantId);
+  const snap = await adminDb
+    .collection(CATEGORIES)
+    .where('restaurantId', '==', restaurantId)
+    .get();
+  return snap.docs
+    .map((d) => {
+      const { restaurantId: _r, ...category } = d.data() as Category & {
+        restaurantId: string;
+      };
+      return category;
+    })
+    .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/**
- * Returns all products for a restaurant.
- * TODO: Firestore — real-time listener on `restaurants/{id}/products`.
- */
 export async function getProducts(restaurantId: string): Promise<Product[]> {
-  // TODO: Firestore — subscribe to products sub-collection
-  return MOCK_PRODUCTS_BY_RESTAURANT[restaurantId] ?? [];
+  await requireMembership(restaurantId);
+  const snap = await adminDb
+    .collection(PRODUCTS)
+    .where('restaurantId', '==', restaurantId)
+    .get();
+  return snap.docs.map((d) => {
+    const { restaurantId: _r, ...product } = d.data() as Product & {
+      restaurantId: string;
+    };
+    return product;
+  });
 }
 
 // ─── Category mutations ───────────────────────────────────────────────────────
 
-/**
- * Creates a new category.
- * Today: no-op (hook applies optimistically with a generated id).
- * TODO: Firestore — addDoc(collection(db, 'restaurants', id, 'categories'), { ... })
- */
 export async function createCategory(
-  _restaurantId: string,
-  _fields: CategoryFields,
-  _sortOrder: number
+  restaurantId: string,
+  category: Category
 ): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
-  // TODO: Firestore — persist new category
+  await requireMembership(restaurantId);
+  await adminDb
+    .collection(CATEGORIES)
+    .doc(category.id)
+    .set({ ...category, restaurantId });
 }
 
-/**
- * Updates an existing category.
- * Today: no-op (hook applies optimistically).
- * TODO: Firestore — updateDoc(doc(db, 'restaurants', id, 'categories', categoryId), { name })
- */
 export async function updateCategory(
-  _restaurantId: string,
-  _categoryId: string,
-  _fields: CategoryFields
+  restaurantId: string,
+  category: Category
 ): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
-  // TODO: Firestore — persist category update
+  await requireMembership(restaurantId);
+  await adminDb
+    .collection(CATEGORIES)
+    .doc(category.id)
+    .set({ ...category, restaurantId });
 }
 
-/**
- * Deletes a category (and all its products in a real backend).
- * Today: no-op (hook removes locally).
- * TODO: Firestore — batch delete category doc + all products with this categoryId
- */
+/** Delete a category and cascade-delete all its products in one batch. */
 export async function deleteCategory(
-  _restaurantId: string,
-  _categoryId: string
+  restaurantId: string,
+  categoryId: string
 ): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
-  // TODO: Firestore — batch delete
+  await requireMembership(restaurantId);
+  const batch = adminDb.batch();
+  batch.delete(adminDb.collection(CATEGORIES).doc(categoryId));
+
+  const products = await adminDb
+    .collection(PRODUCTS)
+    .where('restaurantId', '==', restaurantId)
+    .where('categoryId', '==', categoryId)
+    .get();
+  for (const doc of products.docs) batch.delete(doc.ref);
+
+  await batch.commit();
 }
 
 // ─── Product mutations ────────────────────────────────────────────────────────
 
-/**
- * Creates a new product.
- * Today: no-op (hook applies optimistically with a generated id).
- * TODO: Firestore — addDoc(collection(db, 'restaurants', id, 'products'), { ... })
- */
 export async function createProduct(
-  _restaurantId: string,
-  _fields: ProductFields
+  restaurantId: string,
+  product: Product
 ): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
-  // TODO: Firestore — persist new product
+  await requireMembership(restaurantId);
+  await adminDb
+    .collection(PRODUCTS)
+    .doc(product.id)
+    .set({ ...product, restaurantId });
 }
 
-/**
- * Updates an existing product.
- * Today: no-op (hook applies optimistically).
- * TODO: Firestore — updateDoc(doc(db, 'restaurants', id, 'products', productId), { ... })
- */
 export async function updateProduct(
-  _restaurantId: string,
-  _productId: string,
-  _fields: ProductFields
+  restaurantId: string,
+  product: Product
 ): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
-  // TODO: Firestore — persist product update
+  await requireMembership(restaurantId);
+  await adminDb
+    .collection(PRODUCTS)
+    .doc(product.id)
+    .set({ ...product, restaurantId });
 }
 
-/**
- * Deletes a product.
- * Today: no-op (hook removes locally).
- * TODO: Firestore — deleteDoc(doc(db, 'restaurants', id, 'products', productId))
- */
 export async function deleteProduct(
-  _restaurantId: string,
-  _productId: string
+  restaurantId: string,
+  productId: string
 ): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
-  // TODO: Firestore — delete product document
+  await requireMembership(restaurantId);
+  await adminDb.collection(PRODUCTS).doc(productId).delete();
 }
 
-/**
- * Toggles a product's availability flag.
- * Today: no-op (hook applies optimistically).
- * TODO: Firestore — updateDoc(productRef, { available: !current })
- */
 export async function toggleProductAvailability(
-  _restaurantId: string,
-  _productId: string,
-  _available: boolean
+  restaurantId: string,
+  productId: string,
+  available: boolean
 ): Promise<void> {
-  // Intentionally no delay — availability toggle should feel instant
-  // TODO: Firestore — atomic availability flip
+  await requireMembership(restaurantId);
+  await adminDb.collection(PRODUCTS).doc(productId).update({ available });
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import { useAuth, useActiveRole } from '@/lib/auth/auth-context';
 import { useMenu } from '@/features/menu/hooks/use-menu';
 import { MenuPageHeader } from '@/features/menu/components/menu-page-header';
@@ -31,6 +32,7 @@ export default function MenuPage() {
   const {
     categories,
     grouped,
+    isLoading,
     isMutating,
     handleAddCategory,
     handleEditCategory,
@@ -60,6 +62,26 @@ export default function MenuPage() {
       onSave={handleAddCategory}
     />
   ) : undefined;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6">
+        <MenuPageHeader
+          restaurantName={activeRestaurant.name}
+          isOwner={isOwner}
+          actions={headerActions}
+        />
+        <div
+          className="flex items-center justify-center py-20"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+          <span className="sr-only">Cargando menú…</span>
+        </div>
+      </div>
+    );
+  }
 
   if (categories.length === 0) {
     return (

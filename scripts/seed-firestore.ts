@@ -28,6 +28,10 @@ import {
   MOCK_ZONES_BY_RESTAURANT,
   MOCK_TABLES_BY_RESTAURANT,
 } from '@/lib/mock-data';
+import {
+  MOCK_CATEGORIES_BY_RESTAURANT,
+  MOCK_PRODUCTS_BY_RESTAURANT,
+} from '@/features/menu/services/menu-mock-data';
 
 const SEED_ADMIN_USERNAME =
   process.env.SEED_ADMIN_USERNAME ?? MOCK_CURRENT_USER.username;
@@ -91,6 +95,17 @@ async function main(): Promise<void> {
     ([restaurantId, list]) => list.map((t) => ({ ...t, restaurantId }))
   );
   await seedCollection('tables', tables);
+
+  // Menu — categories and products keyed by restaurant in the feature mock.
+  const categories = Object.entries(MOCK_CATEGORIES_BY_RESTAURANT).flatMap(
+    ([restaurantId, list]) => list.map((c) => ({ ...c, restaurantId }))
+  );
+  await seedCollection('categories', categories);
+
+  const products = Object.entries(MOCK_PRODUCTS_BY_RESTAURANT).flatMap(
+    ([restaurantId, list]) => list.map((p) => ({ ...p, restaurantId }))
+  );
+  await seedCollection('products', products);
 
   console.log('[seed] done ✓');
 }
