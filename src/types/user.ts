@@ -12,4 +12,12 @@ export interface User {
    * with a Membership role. See `platform.ts`.
    */
   platformRole?: PlatformRole;
+  /**
+   * When true the account is administratively disabled and the user cannot
+   * sign in. Absent or false = active account. Managed exclusively via the
+   * platform admin panel — never set by the user themselves.
+   * TODO: Firestore — persist as `isDisabled` on the user document; use
+   * Firebase Auth `updateUser(uid, { disabled: true })` to block sign-in.
+   */
+  isDisabled?: boolean;
 }

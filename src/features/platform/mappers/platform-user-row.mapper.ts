@@ -14,6 +14,7 @@ export function toPlatformUserRow(
   return {
     user,
     isPlatformAdmin: user.platformRole === 'superadmin',
+    isDisabled: user.isDisabled === true,
     memberships: memberships
       .map((m) => ({
         restaurantId: m.restaurantId,

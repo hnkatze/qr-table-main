@@ -1,7 +1,7 @@
 import type { Plan } from '@/types/plan';
 import type { User } from '@/types/user';
 import type { SubscriptionStatus } from '@/types/subscription';
-import type { CommerceRow, PlatformUserRow, PlanFields } from '@/features/platform/types';
+import type { CommerceRow, PlatformUserRow, PlanFields, CommerceDetail } from '@/features/platform/types';
 import {
   MOCK_RESTAURANTS,
   MOCK_PLANS,
@@ -11,10 +11,12 @@ import {
   getMembershipsForUser,
 } from '@/lib/mock-data';
 import { getTablesSnapshot } from '@/features/tables/services/tables.service';
+import { MOCK_PRODUCTS_BY_RESTAURANT } from '@/features/menu/services/menu-mock-data';
 import {
   toCommerceRow,
   sortCommerceRows,
 } from '@/features/platform/mappers/commerce-row.mapper';
+import { toCommerceDetail } from '@/features/platform/mappers/commerce-detail.mapper';
 import {
   toPlatformUserRow,
   sortPlatformUserRows,
@@ -61,6 +63,44 @@ export function getCommercesSnapshot(): CommerceRow[] {
     })
   );
   return sortCommerceRows(rows);
+}
+
+/**
+ * Returns a single commerce with full detail for the drill-down page.
+ * Returns null if no restaurant with that id exists.
+ * TODO: Firestore — getDoc(restaurantRef) + parallel reads for members + tables + products.
+ */
+export function getCommerceDetailSnapshot(restaurantId: string): CommerceDetail | null {
+  const restaurant = MOCK_RESTAURANTS.find((r) => r.id === restaurantId) ?? null;
+  if (!restaurant) return null;
+
+  const usersById = buildUsersById();
+  const members = getMembersForRestaurant(restaurantId);
+  const tables = getTablesSnapshot(restaurantId);
+  const productCount = (MOCK_PRODUCTS_BY_RESTAURANT[restaurantId] ?? []).length;
+  const plan = getPlanById(restaurant.subscription.planId);
+
+  return toCommerceDetail({
+    restaurant,
+    plan,
+    members,
+    usersById,
+    tableCount: tables.length,
+    productCount,
+  });
+}
+
+/**
+ * Assigns a new plan to a commerce's subscription.
+ * Today: no-op (hook applies optimistically).
+ * TODO: Firestore — updateDoc(restaurantRef, { 'subscription.planId': planId }).
+ */
+export async function setCommercePlan(
+  _restaurantId: string,
+  _planId: string
+): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
+  // TODO: Firestore — persist plan assignment
 }
 
 /**
@@ -126,4 +166,35 @@ export function getPlatformUsersSnapshot(): PlatformUserRow[] {
     toPlatformUserRow(user, getMembershipsForUser(user.id))
   );
   return sortPlatformUserRows(rows);
+}
+
+/**
+ * Grants or revokes the 'superadmin' platform role on a user account.
+ * Today: no-op (hook applies optimistically); the hook patches the row locally.
+ * TODO: Firestore — updateDoc(doc(db, 'users', userId), { platformRole: role ?? null }).
+ * TODO: Firebase Auth — also set custom claims via the Admin SDK to gate Cloud
+ * Function access: auth().setCustomUserClaims(uid, { platformRole: 'superadmin' }).
+ */
+export async function setPlatformRole(
+  _userId: string,
+  _role: 'superadmin' | null
+): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
+  // TODO: Firestore — persist platformRole change
+}
+
+/**
+ * Enables or disables a user account.
+ * Today: no-op (hook applies optimistically).
+ * TODO: Firestore — updateDoc(doc(db, 'users', userId), { isDisabled }).
+ * TODO: Firebase Auth — Firebase Admin SDK: auth().updateUser(uid, { disabled: isDisabled }).
+ * This is the authoritative block at the auth layer; Firestore mirrors the state
+ * for display purposes.
+ */
+export async function setUserDisabled(
+  _userId: string,
+  _isDisabled: boolean
+): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, MOCK_WRITE_DELAY_MS));
+  // TODO: Firestore — persist isDisabled + Firebase Auth updateUser
 }
