@@ -8,9 +8,9 @@ import {
   EyeOff,
   Loader2,
   Lock,
-  Mail,
+  User,
 } from 'lucide-react';
-import { createMockSession } from '@/lib/auth/session';
+import { signInWithUsername } from '@/lib/auth/auth-actions';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,33 +23,25 @@ type FormStatus =
   | { kind: 'submitting' }
   | { kind: 'error'; message: string };
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-/** Demo credentials accepted by the mock sign-in. */
-const MOCK_EMAIL = 'ana@example.com';
-const MOCK_PASSWORD = 'password';
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
  * Premium login form (client component).
  *
- * Auth is currently mocked — Firebase Auth is not yet installed.
- * On success it navigates to /dashboard.
- *
- * TODO: wire Firebase Auth — replace mockSignIn() body with:
- *   await signInWithEmailAndPassword(firebaseAuth, email, password);
+ * Sign-in is by username + password. The whole verification happens in the
+ * signInWithUsername Server Action (resolve username→email, verify password,
+ * mint a session cookie). On success it navigates to /dashboard.
  */
 export function LoginForm() {
   const router = useRouter();
 
   // Stable id prefix for aria attributes — avoids hydration mismatch
   const uid = useId();
-  const emailId = `${uid}-email`;
+  const usernameId = `${uid}-username`;
   const passwordId = `${uid}-password`;
   const errorId = `${uid}-error`;
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<FormStatus>({ kind: 'idle' });
   const [showPassword, setShowPassword] = useState(false);
@@ -57,33 +49,9 @@ export function LoginForm() {
   // ── Validation ──────────────────────────────────────────────────────────────
 
   function validate(): string | null {
-    if (!email.trim()) return 'Ingresá tu correo electrónico.';
-    if (!email.includes('@')) return 'El correo electrónico no es válido.';
+    if (!username.trim()) return 'Ingresá tu usuario.';
     if (!password) return 'Ingresá tu contraseña.';
     return null;
-  }
-
-  // ── Mock sign-in ────────────────────────────────────────────────────────────
-
-  async function mockSignIn(
-    emailValue: string,
-    passwordValue: string
-  ): Promise<void> {
-    // Simulate network latency
-    await new Promise<void>((resolve) => setTimeout(resolve, 800));
-
-    // TODO: wire Firebase Auth
-    //   import { signInWithEmailAndPassword } from 'firebase/auth';
-    //   import { firebaseAuth } from '@/lib/firebase';
-    //   await signInWithEmailAndPassword(firebaseAuth, emailValue, passwordValue);
-
-    // Mock: accept only the seeded demo credentials
-    if (
-      emailValue.toLowerCase() !== MOCK_EMAIL ||
-      passwordValue !== MOCK_PASSWORD
-    ) {
-      throw new Error('Correo o contraseña incorrectos.');
-    }
   }
 
   // ── Submit handler ──────────────────────────────────────────────────────────
@@ -100,20 +68,18 @@ export function LoginForm() {
     setStatus({ kind: 'submitting' });
 
     try {
-      await mockSignIn(email, password);
-      // TODO: Firebase will set the session via verified ID token (server-side
-      // admin SDK call) instead of this mock. Replace createMockSession() with
-      // a Server Action that receives the Firebase ID token and issues a real
-      // session cookie after verifying it.
-      await createMockSession();
-      // Navigate to the dashboard — the Proxy will now see the session cookie.
+      const result = await signInWithUsername(username, password);
+      if (!result.ok) {
+        setStatus({ kind: 'error', message: result.error });
+        return;
+      }
+      // Session cookie is set — the Proxy will now allow the dashboard.
       router.push('/dashboard');
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Ocurrió un error. Intentá de nuevo.';
-      setStatus({ kind: 'error', message });
+    } catch {
+      setStatus({
+        kind: 'error',
+        message: 'Ocurrió un error. Intentá de nuevo.',
+      });
     }
   }
 
@@ -168,23 +134,25 @@ export function LoginForm() {
             </div>
           )}
 
-          {/* ── Email field ─────────────────────────────────────────────────── */}
+          {/* ── Username field ──────────────────────────────────────────────── */}
           <div className="auth-animate-2 flex flex-col gap-2">
-            <Label htmlFor={emailId} className="text-sm font-medium text-foreground/80">
-              Correo electrónico
+            <Label htmlFor={usernameId} className="text-sm font-medium text-foreground/80">
+              Usuario
             </Label>
             <div className="auth-input-wrapper relative">
-              <Mail
+              <User
                 className="auth-input-icon pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60"
                 aria-hidden="true"
               />
               <Input
-                id={emailId}
-                type="email"
-                autoComplete="email"
-                placeholder="ana@restaurante.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id={usernameId}
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder="tuusuario"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 disabled={isSubmitting}
                 aria-describedby={hasError ? errorId : undefined}
                 aria-invalid={hasError}

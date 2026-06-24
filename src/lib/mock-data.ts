@@ -68,6 +68,7 @@ export function getPlanById(planId: string): Plan | null {
  */
 export const MOCK_CURRENT_USER: User = {
   id: 'usr_ana_001',
+  username: 'ana',
   email: 'ana@mesaapp.hn',
   displayName: 'Ana García',
   photoUrl: undefined,
@@ -78,26 +79,31 @@ export const MOCK_USERS: User[] = [
   MOCK_CURRENT_USER,
   {
     id: 'usr_carlos_002',
+    username: 'carlos',
     email: 'carlos@mesaapp.hn',
     displayName: 'Carlos López',
   },
   {
     id: 'usr_marta_003',
+    username: 'marta',
     email: 'marta@mesaapp.hn',
     displayName: 'Marta Rodríguez',
   },
   {
     id: 'usr_jose_004',
+    username: 'jose',
     email: 'jose@restauranteb.hn',
     displayName: 'José Mejía',
   },
   {
     id: 'usr_sofia_005',
+    username: 'sofia',
     email: 'sofia@cafelenca.hn',
     displayName: 'Sofía Discua',
   },
   {
     id: 'usr_pedro_006',
+    username: 'pedro',
     email: 'pedro@mariscosdelsur.hn',
     displayName: 'Pedro Banegas',
   },

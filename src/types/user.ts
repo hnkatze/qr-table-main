@@ -2,6 +2,12 @@ import type { PlatformRole } from './platform';
 
 export interface User {
   id: string;
+  /**
+   * Unique login handle. The user signs in with `username` + password; we
+   * resolve it to `email` server-side and authenticate against Firebase Auth
+   * (which has no native username login). Must be unique across all users.
+   */
+  username: string;
   email: string;
   displayName?: string;
   photoUrl?: string;

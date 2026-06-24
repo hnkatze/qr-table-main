@@ -4,19 +4,17 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
+import { Loader2 } from 'lucide-react';
 import type { User } from '@/types/user';
 import type { Restaurant } from '@/types/restaurant';
 import type { Role, RestaurantMembership } from '@/types/membership';
 import type { PlatformRole } from '@/types/platform';
 import { hasPermission, type Permission } from '@/lib/permissions';
-import {
-  MOCK_CURRENT_USER,
-  MOCK_CURRENT_USER_MEMBERSHIPS,
-} from '@/lib/mock-data';
-import { clearMockSession } from '@/lib/auth/session';
+import { getCurrentUser, signOutAction } from '@/lib/auth/auth-actions';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -53,6 +51,13 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// ─── Profile loading state ──────────────────────────────────────────────────
+
+type ProfileState =
+  | { status: 'loading' }
+  | { status: 'unauthenticated' }
+  | { status: 'ready'; user: User; memberships: RestaurantMembership[] };
+
 // ─── Safe localStorage helpers (SSR guard) ───────────────────────────────────
 
 function readStoredRestaurantId(): string | null {
@@ -77,6 +82,21 @@ function writeStoredRestaurantId(id: string | null): void {
   }
 }
 
+// ─── Loader ───────────────────────────────────────────────────────────────────
+
+function AuthLoader() {
+  return (
+    <div
+      className="flex min-h-screen items-center justify-center bg-background"
+      role="status"
+      aria-live="polite"
+    >
+      <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+      <span className="sr-only">Cargando tu cuenta…</span>
+    </div>
+  );
+}
+
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 interface AuthProviderProps {
@@ -84,32 +104,64 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // In production these will come from a Firebase Auth listener.
-  // For now they're seeded from mock data.
-  const [currentUser, setCurrentUser] = useState<User | null>(MOCK_CURRENT_USER);
-  const [memberships] = useState<RestaurantMembership[]>(
-    MOCK_CURRENT_USER_MEMBERSHIPS
+  const [profile, setProfile] = useState<ProfileState>({ status: 'loading' });
+  const [activeRestaurantId, setActiveRestaurantId] = useState<string | null>(
+    null
   );
 
-  /**
-   * Initialize activeRestaurantId lazily so localStorage is only read
-   * on the client (never on the server during SSR).
-   * The initializer runs once on mount — no effect needed.
-   */
-  const [activeRestaurantId, setActiveRestaurantId] = useState<string | null>(
-    () => {
-      const stored = readStoredRestaurantId();
-      const isValid =
-        stored !== null &&
-        MOCK_CURRENT_USER_MEMBERSHIPS.some((m) => m.restaurantId === stored);
-      if (isValid) return stored;
-      return MOCK_CURRENT_USER_MEMBERSHIPS[0]?.restaurantId ?? null;
+  // Load the authenticated profile from the verified session cookie on mount.
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentUser()
+      .then((result) => {
+        if (cancelled) return;
+        if (!result) {
+          setProfile({ status: 'unauthenticated' });
+          return;
+        }
+        setProfile({
+          status: 'ready',
+          user: result.user,
+          memberships: result.memberships,
+        });
+        // Restore the active restaurant from localStorage, validated against the
+        // user's real memberships; fall back to the first membership.
+        const stored = readStoredRestaurantId();
+        const isValid =
+          stored !== null &&
+          result.memberships.some((m) => m.restaurantId === stored);
+        setActiveRestaurantId(
+          isValid ? stored : result.memberships[0]?.restaurantId ?? null
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setProfile({ status: 'unauthenticated' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // No valid session → bounce to login (the Proxy also guards, this covers the
+  // case where the cookie is present but the session cookie failed verification).
+  useEffect(() => {
+    if (profile.status === 'unauthenticated') {
+      window.location.assign('/login');
     }
+  }, [profile.status]);
+
+  // Derived, stable across renders so the callbacks/memos below don't churn.
+  const currentUser = profile.status === 'ready' ? profile.user : null;
+  const memberships = useMemo<RestaurantMembership[]>(
+    () => (profile.status === 'ready' ? profile.memberships : []),
+    [profile]
   );
 
   const setActiveRestaurant = useCallback(
     (restaurantId: string) => {
-      const membership = memberships.find((m) => m.restaurantId === restaurantId);
+      const membership = memberships.find(
+        (m) => m.restaurantId === restaurantId
+      );
       if (!membership) return;
       setActiveRestaurantId(restaurantId);
       writeStoredRestaurantId(restaurantId);
@@ -118,25 +170,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 
   const signOut = useCallback(() => {
-    console.log('[signout] clicked — clearing client state');
-    // Clear client-side state immediately (optimistic).
-    setCurrentUser(null);
+    // Clear client state immediately, clear the server cookie, then hard-navigate
+    // so the Proxy re-evaluates with the cookie already gone.
+    setProfile({ status: 'unauthenticated' });
     setActiveRestaurantId(null);
     writeStoredRestaurantId(null);
-    // Clear the server-side session cookie, then HARD-navigate to login.
-    // A hard navigation (not router.push) forces a fresh request so the Proxy
-    // re-evaluates with the cookie already cleared — avoids the RSC-cache / redirect
-    // race where /login still sees the old cookie and bounces back to /dashboard.
-    // `.finally` guarantees we leave the dashboard even if the action rejects.
-    // TODO: also call Firebase Auth signOut() and revoke the refresh token before
-    // calling clearMockSession() once Firebase is wired.
-    void clearMockSession()
-      .then(() => console.log('[signout] clearMockSession resolved OK'))
-      .catch((e) => console.error('[signout] clearMockSession FAILED', e))
-      .finally(() => {
-        console.log('[signout] hard-navigating to /login');
-        window.location.assign('/login');
-      });
+    void signOutAction().finally(() => window.location.assign('/login'));
   }, []);
 
   const activeRestaurant = useMemo<Restaurant | null>(() => {
@@ -157,6 +196,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }),
     [currentUser, memberships, activeRestaurant, setActiveRestaurant, signOut]
   );
+
+  // Gate rendering until the profile resolves so consumers always see a real
+  // user (no null-currentUser flicker through the dashboard shell).
+  if (profile.status !== 'ready') {
+    return <AuthLoader />;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
