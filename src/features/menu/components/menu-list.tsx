@@ -37,6 +37,7 @@ interface MenuListProps {
   onEditProduct: (productId: string, fields: ProductFields) => Promise<void>;
   onDeleteProduct: (productId: string) => Promise<void>;
   onToggleAvailability: (productId: string, available: boolean) => void;
+  onUploadImage: (file: File) => Promise<string>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ export function MenuList({
   onEditProduct,
   onDeleteProduct,
   onToggleAvailability,
+  onUploadImage,
 }: MenuListProps) {
   const [editCatState, setEditCatState] = useState<EditCategoryState>({
     open: false,
@@ -188,6 +190,7 @@ export function MenuList({
         categories={categories}
         isMutating={isMutating}
         onSave={handleProductSave}
+        onUploadImage={onUploadImage}
       />
     </div>
   );

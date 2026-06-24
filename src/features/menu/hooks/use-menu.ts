@@ -18,6 +18,8 @@ import {
   toggleProductAvailability,
 } from '@/features/menu/services/menu.service';
 import { groupProductsByCategory } from '@/features/menu/mappers/group-products-by-category.mapper';
+import { compressToWebp } from '@/lib/image/compress-to-webp';
+import { uploadProductImage } from '@/lib/storage/storage-actions';
 import { shortId } from '@/lib/id';
 
 // ─── Input / Output ───────────────────────────────────────────────────────────
@@ -50,6 +52,9 @@ export interface UseMenuOutput {
 
   /** Flips a product's availability flag immediately (no async delay). */
   handleToggleAvailability: (productId: string, available: boolean) => void;
+
+  /** Compress an image to WebP, upload it to Storage, return its public URL. */
+  handleUploadImage: (file: File) => Promise<string>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -70,6 +75,7 @@ function toProduct(id: string, fields: ProductFields): Product {
     price: parseFloat(fields.price) || 0,
     available: fields.available,
     emoji: fields.emoji.trim() || undefined,
+    imageUrl: fields.imageUrl?.trim() || undefined,
   };
 }
 
@@ -241,6 +247,15 @@ export function useMenu({ restaurantId }: UseMenuInput): UseMenuOutput {
     );
   }
 
+  async function handleUploadImage(file: File): Promise<string> {
+    if (!restaurantId) throw new Error('No hay comercio activo.');
+    const webp = await compressToWebp(file);
+    const formData = new FormData();
+    formData.append('restaurantId', restaurantId);
+    formData.append('file', webp, 'image.webp');
+    return uploadProductImage(formData);
+  }
+
   return {
     categories: localCategories,
     products: localProducts,
@@ -254,5 +269,6 @@ export function useMenu({ restaurantId }: UseMenuInput): UseMenuOutput {
     handleEditProduct,
     handleDeleteProduct,
     handleToggleAvailability,
+    handleUploadImage,
   };
 }

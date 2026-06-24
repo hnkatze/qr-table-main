@@ -41,6 +41,7 @@ export default function MenuPage() {
     handleEditProduct,
     handleDeleteProduct,
     handleToggleAvailability,
+    handleUploadImage,
   } = useMenu({ restaurantId: activeRestaurant?.id ?? null });
 
   if (!activeRestaurant) {
@@ -117,6 +118,7 @@ export default function MenuPage() {
         onEditProduct={handleEditProduct}
         onDeleteProduct={handleDeleteProduct}
         onToggleAvailability={handleToggleAvailability}
+        onUploadImage={handleUploadImage}
       />
 
       {!isOwner && (

@@ -34,4 +34,6 @@ export interface ProductFields {
   emoji: string;
   available: boolean;
   categoryId: string;
+  /** Public Storage URL of the uploaded photo, set after upload. Optional. */
+  imageUrl?: string;
 }

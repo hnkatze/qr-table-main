@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { PencilIcon, Trash2Icon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AvailabilityBadge } from './availability-badge';
@@ -33,7 +34,7 @@ export function ProductRow({
   onDelete,
   onToggleAvailability,
 }: ProductRowProps) {
-  const { id, name, description, price, available, emoji } = product;
+  const { id, name, description, price, available, emoji, imageUrl } = product;
   const formattedPrice = formatPrice(price, currency);
   const toggleLabel = available
     ? `Marcar "${name}" como no disponible`
@@ -41,13 +42,25 @@ export function ProductRow({
 
   return (
     <li className="group/row flex items-start gap-3 border-b border-border/60 px-4 py-3 last:border-b-0 transition-colors hover:bg-muted/30 sm:items-center sm:px-6">
-      {/* Emoji */}
-      <span
-        aria-hidden="true"
-        className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted/50 text-base sm:mt-0"
-      >
-        {emoji ?? '🍽️'}
-      </span>
+      {/* Photo or emoji fallback */}
+      {imageUrl ? (
+        <span className="relative mt-0.5 size-10 shrink-0 overflow-hidden rounded-md sm:mt-0">
+          <Image
+            src={imageUrl}
+            alt={`Foto de ${name}`}
+            fill
+            sizes="40px"
+            className="object-cover"
+          />
+        </span>
+      ) : (
+        <span
+          aria-hidden="true"
+          className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-md bg-muted/50 text-base sm:mt-0"
+        >
+          {emoji ?? '🍽️'}
+        </span>
+      )}
 
       {/* Name + description */}
       <div className="flex-1 min-w-0">

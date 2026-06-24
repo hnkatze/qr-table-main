@@ -13,4 +13,6 @@ export interface Product {
   price: number;
   available: boolean;
   emoji?: string;
+  /** Public URL of the product photo in Firebase Storage (WebP). Optional. */
+  imageUrl?: string;
 }

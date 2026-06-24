@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useId } from 'react';
+import { useState, useId, useRef } from 'react';
+import Image from 'next/image';
+import { ImageIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,7 @@ function productToFields(product: Product, defaultCategoryId: string): ProductFi
     emoji: product.emoji ?? '',
     available: product.available,
     categoryId: product.categoryId,
+    imageUrl: product.imageUrl,
   };
 }
 
@@ -43,6 +46,7 @@ function emptyFields(defaultCategoryId: string): ProductFields {
     emoji: '',
     available: true,
     categoryId: defaultCategoryId,
+    imageUrl: undefined,
   };
 }
 
@@ -67,6 +71,8 @@ interface ProductDialogProps {
   categories: Category[];
   isMutating: boolean;
   onSave: (fields: ProductFields, productId?: string) => Promise<void>;
+  /** Compress + upload a photo, returning its public URL. */
+  onUploadImage: (file: File) => Promise<string>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -88,6 +94,7 @@ export function ProductDialog({
   categories,
   isMutating,
   onSave,
+  onUploadImage,
 }: ProductDialogProps) {
   const isEdit = mode === 'edit';
   const title = isEdit ? 'Editar producto' : 'Nuevo producto';
@@ -103,6 +110,8 @@ export function ProductDialog({
       : emptyFields(defaultCategoryId)
   );
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Stable IDs for a11y
   const nameId = useId();
@@ -110,7 +119,26 @@ export function ProductDialog({
   const priceId = useId();
   const descId = useId();
   const categoryId = useId();
+  const imageId = useId();
   const errorId = useId();
+
+  async function handleFileChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-picking the same file
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await onUploadImage(file);
+      updateField('imageUrl', url);
+    } catch {
+      setError('No se pudo subir la imagen. Intentá de nuevo.');
+    } finally {
+      setIsUploading(false);
+    }
+  }
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
@@ -243,6 +271,72 @@ export function ProductDialog({
               />
             </div>
 
+            {/* Photo */}
+            <div className="space-y-1.5">
+              <Label htmlFor={imageId}>
+                Foto{' '}
+                <span className="font-normal text-muted-foreground">(opcional)</span>
+              </Label>
+              <div className="flex items-center gap-3">
+                {fields.imageUrl ? (
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-md border border-border">
+                    <Image
+                      src={fields.imageUrl}
+                      alt={`Foto de ${fields.name || 'producto'}`}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground"
+                    aria-hidden="true"
+                  >
+                    <ImageIcon className="size-5" />
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    id={imageId}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                    disabled={isUploading || isMutating}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading || isMutating}
+                  >
+                    {isUploading
+                      ? 'Subiendo…'
+                      : fields.imageUrl
+                        ? 'Cambiar foto'
+                        : 'Subir foto'}
+                  </Button>
+                  {fields.imageUrl && !isUploading && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateField('imageUrl', undefined)}
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      Quitar
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Se convierte a WebP y se optimiza automáticamente.
+              </p>
+            </div>
+
             {/* Category */}
             <div className="space-y-1.5">
               <Label htmlFor={categoryId}>
@@ -302,7 +396,7 @@ export function ProductDialog({
           <Button
             type="submit"
             form="product-form"
-            disabled={isMutating || !fields.name.trim() || !fields.price}
+            disabled={isMutating || isUploading || !fields.name.trim() || !fields.price}
             className="bg-brand-sky text-white hover:bg-brand-sky/90 focus-visible:ring-brand-sky/40 disabled:bg-brand-sky/50"
           >
             {isMutating ? submittingLabel : submitLabel}
